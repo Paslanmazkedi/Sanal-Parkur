@@ -17,8 +17,8 @@ export default function SimulatorPage() {
     const loadSelectionData = async () => {
       const { data: o } = await supabase.from('production_orders').select('*');
         const { data: a } = await supabase.from('workstations').select('*');
-      if (o) { setOrders(o); if (o.length > 0) setSelectedOrderId(o[0].id); }
-      if (a) { setAssets(a); if (a.length > 0) setSelectedAssetId(a[0].id); }
+      if (o) { setOrders(o); if (o.length > 0) setSelectedOrderId(o[0].p_order_id); }
+      if (a) { setAssets(a); if (a.length > 0) setSelectedAssetId(a[0].station_id); }
     };
     loadSelectionData();
   }, []);
@@ -68,13 +68,17 @@ export default function SimulatorPage() {
           <div>
             <label className="block text-[11px] font-mono text-slate-500 uppercase tracking-widest mb-1.5">Hedef İş Emri (Workcube)</label>
             <select value={selectedOrderId} onChange={(e) => setSelectedOrderId(e.target.value)} className="w-full bg-slate-950 border border-slate-800 rounded-xl p-3 text-sm text-white focus:outline-none focus:border-emerald-500">
-              {orders.map(o => <option key={o.id} value={o.id}>{o.code} (ID: {o.id})</option>)}
+{orders.map(order => (
+  <option key={order.p_order_id} value={order.p_order_id}>
+    {order.p_order_no} - {order.product_name2} (ID: {order.p_order_id})
+  </option>
+))}
             </select>
           </div>
           <div>
             <label className="block text-[11px] font-mono text-slate-500 uppercase tracking-widest mb-1.5">Sinyalin Tetiklendiği Cihaz</label>
             <select value={selectedAssetId} onChange={(e) => setSelectedAssetId(e.target.value)} className="w-full bg-slate-950 border border-slate-800 rounded-xl p-3 text-sm text-white focus:outline-none focus:border-emerald-500" disabled>
-               {assets.map(a => <option key={a.id} value={a.id}>{a.station_name} (ID: {a.id})</option>)}
+{assets.map(a => <option key={a.station_id} value={a.station_id}>{a.station_name} (ID: {a.station_id})</option>)}
             </select>
           </div>
           <div>

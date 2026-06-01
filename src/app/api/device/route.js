@@ -1,7 +1,6 @@
-// Next.js Route Handler for IoT Gateway integration
-// This endpoint returns the first pending production order and marks it as sent.
-// It is intentionally minimal and stateless – the gateway simply polls this
-// endpoint to fetch the next order.
+// Next.js Route Handler for IoT Gateway integration// This endpoint returns the first pending production order with is_stage = 4 (Başlamadı)
+// and marks it as sent by updating is_stage and prod_order_stage to 0 (Operatöre Gönderildi).
+// It returns a JSON payload with uppercase keys matching Workcube standards.
 
 import { createClient } from '@supabase/supabase-js';
 
@@ -10,12 +9,11 @@ const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 const supabase = createClient(supabaseUrl, supabaseAnonKey);
 
 export async function GET() {
-  // Find the first order with status 'PENDING'
-  const { data: orders, error: fetchErr } = await supabase
-    .from('production_orders')
-    .select('*')
-    .eq('status', 'PENDING')
-    .order('id', { ascending: true })
+  // Find the first order with is_stage = 4 (Başlamadı)
+  const { data: orders, error: fetchErr } = await supabase    .from('production_orders')
+    .select('*, workstations!inner(asset_id)')
+    .eq('is_stage', 4)
+    .order('p_order_id', { ascending: true })
     .limit(1);
 
   if (fetchErr || !orders || orders.length === 0) {
@@ -26,12 +24,13 @@ export async function GET() {
   }
 
   const order = orders[0];
+  const stationAsset = order.workstations?.asset_id ?? null;
 
-  // Update status to SENT_TO_DEVICE
+  // Update status to SENT_TO_DEVICE (is_stage = 0 and prod_order_stage = 0)
   const { error: updateErr } = await supabase
     .from('production_orders')
-    .update({ status: 'SENT_TO_DEVICE' })
-    .eq('id', order.id);
+    .update({ is_stage: 0, prod_order_stage: 0 })
+    .eq('p_order_id', order.p_order_id);
 
   if (updateErr) {
     return new Response(JSON.stringify({ error: 'Failed to update status' }), {
@@ -40,13 +39,16 @@ export async function GET() {
     });
   }
 
-  // Return a clean JSON payload
+  // Return a clean JSON payload with uppercase keys matching Workcube standards
   const payload = {
-    id: order.id,
-    order_code: order.order_code,
-    station_id: order.station_id,
-    status: 'SENT_TO_DEVICE',
-    total_qty: order.total_qty,
+    P_ORDER_ID: order.p_order_id,
+    P_ORDER_NO: order.p_order_no,
+    PRODUCT_NAME2: order.product_name2,
+    LOT_NO: order.lot_no,
+    STATION_ID: order.station_id,
+    ASSET_ID: stationAsset,
+    QUANTITY: order.quantity,
+    IS_STAGE: 0,
   };
 
   return new Response(JSON.stringify(payload), {
