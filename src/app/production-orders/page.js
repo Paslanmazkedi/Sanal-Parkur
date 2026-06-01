@@ -26,7 +26,16 @@ export default function ProductionOrdersPage() {
     const handleCreateOrder = async (e) => {
     e.preventDefault();
     setLoading(true);
-      const { error } = await supabase.from('production_orders').insert([{ code: woCode, total_qty: woQty, status: 1, station_id: Number(selectedStationId) }]);
+      // The production_orders table expects columns: order_code, station_id, status, total_qty.
+      // `status` is a string with default 'PENDING'. We omit `id` as it is auto‑increment.
+      const { error } = await supabase.from('production_orders').insert([
+        {
+          order_code: woCode,
+          total_qty: woQty,
+          status: 'PENDING',
+          station_id: Number(selectedStationId),
+        },
+      ]);
     if (!error) {
       setWoCode(`WO-2026-00${orders.length + 2}`);
       loadOrders();

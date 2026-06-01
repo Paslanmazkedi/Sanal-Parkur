@@ -18,7 +18,10 @@ export default function AssetsPage() {
     const handleCreateAsset = async (e) => {
     e.preventDefault();
     setLoading(true);
-      const { error } = await supabase.from('workstations').insert([{ station_name: assetName, status: true }]);
+      // Insert only the columns that exist in the workstations table.
+      // The table has `station_name` and `asset_id` (auto‑generated). We do not
+      // need to send a `status` flag unless the schema requires it.
+      const { error } = await supabase.from('workstations').insert([{ station_name: assetName }]);
     if (!error) {
       setAssetName('');
       loadAssets();
