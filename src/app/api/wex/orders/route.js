@@ -1,5 +1,4 @@
-1 | import { supabase } from '../../supabase';
-
+import { supabase } from '../../../supabase';
 /**
  * GET /api/wex/orders
  * Returns pending or active production orders.
