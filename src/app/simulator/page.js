@@ -7,6 +7,7 @@ export default function SimulatorPage() {
   const [assets, setAssets] = useState([]);
   const [selectedOrderId, setSelectedOrderId] = useState('');
   const [selectedAssetId, setSelectedAssetId] = useState('');
+  const [orderStationId, setOrderStationId] = useState('');
   const [signalType, setSignalType] = useState(1);
   const [counterValue, setCounterValue] = useState(100.0);
   const [loading, setLoading] = useState(false);
@@ -15,7 +16,7 @@ export default function SimulatorPage() {
   useEffect(() => {
     const loadSelectionData = async () => {
       const { data: o } = await supabase.from('production_orders').select('*');
-      const { data: a } = await supabase.from('assets').select('*');
+        const { data: a } = await supabase.from('workstations').select('*');
       if (o) { setOrders(o); if (o.length > 0) setSelectedOrderId(o[0].id); }
       if (a) { setAssets(a); if (a.length > 0) setSelectedAssetId(a[0].id); }
     };
@@ -72,8 +73,8 @@ export default function SimulatorPage() {
           </div>
           <div>
             <label className="block text-[11px] font-mono text-slate-500 uppercase tracking-widest mb-1.5">Sinyalin Tetiklendiği Cihaz</label>
-            <select value={selectedAssetId} onChange={(e) => setSelectedAssetId(e.target.value)} className="w-full bg-slate-950 border border-slate-800 rounded-xl p-3 text-sm text-white focus:outline-none focus:border-emerald-500">
-              {assets.map(a => <option key={a.id} value={a.id}>{a.name} (ID: {a.id})</option>)}
+            <select value={selectedAssetId} onChange={(e) => setSelectedAssetId(e.target.value)} className="w-full bg-slate-950 border border-slate-800 rounded-xl p-3 text-sm text-white focus:outline-none focus:border-emerald-500" disabled>
+               {assets.map(a => <option key={a.id} value={a.id}>{a.station_name} (ID: {a.id})</option>)}
             </select>
           </div>
           <div>

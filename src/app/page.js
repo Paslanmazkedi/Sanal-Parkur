@@ -10,7 +10,7 @@ export default function Dashboard() {
   useEffect(() => {
     const loadDashboardData = async () => {
       const { count: oCount } = await supabase.from('production_orders').select('*', { count: 'exact', head: true });
-      const { count: aCount } = await supabase.from('assets').select('*', { count: 'exact', head: true });
+        const { count: aCount } = await supabase.from('workstations').select('*', { count: 'exact', head: true });
       const { data: ops, count: opCount } = await supabase.from('production_order_operations').select('*', { count: 'exact' }).order('id', { ascending: false }).limit(5);
 
       setStats({ orders: oCount || 0, assets: aCount || 0, operations: opCount || 0 });

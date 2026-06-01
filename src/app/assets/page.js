@@ -10,15 +10,15 @@ export default function AssetsPage() {
 
   useEffect(() => { loadAssets(); }, []);
 
-  const loadAssets = async () => {
-    const { data } = await supabase.from('assets').select('*').order('id', { ascending: false });
+    const loadAssets = async () => {
+      const { data } = await supabase.from('workstations').select('*').order('id', { ascending: false });
     if (data) setAssets(data);
   };
 
-  const handleCreateAsset = async (e) => {
+    const handleCreateAsset = async (e) => {
     e.preventDefault();
     setLoading(true);
-    const { error } = await supabase.from('assets').insert([{ name: assetName, status: true }]);
+      const { error } = await supabase.from('workstations').insert([{ station_name: assetName, status: true }]);
     if (!error) {
       setAssetName('');
       loadAssets();
@@ -60,8 +60,8 @@ export default function AssetsPage() {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
             {assets.map(a => (
               <div key={a.id} className="p-4 bg-slate-950/40 border border-slate-800/60 rounded-xl flex justify-between items-center hover:border-slate-700 transition-colors">
-                <span className="font-semibold text-slate-200 text-sm">{a.name}</span>
-                <span className="bg-purple-950/60 text-purple-400 font-mono text-[11px] font-bold px-2.5 py-1 rounded-md border border-purple-900/40">ID: {a.id}</span>
+                 <span className="font-semibold text-slate-200 text-sm">{a.station_name}</span>
+                 <span className="bg-purple-950/60 text-purple-400 font-mono text-[11px] font-bold px-2.5 py-1 rounded-md border border-purple-900/40">ID: {a.id}</span>
               </div>
             ))}
           </div>
