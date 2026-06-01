@@ -2,7 +2,7 @@
 // Columns: station_id (PK), station_name, asset_id, capacity, cost, cost_money, unit2, comment, branch, department, active, is_capacity
 'use client';
 import { useState, useEffect } from 'react';
-import { supabase } from '../../../supabase';
+import { supabase } from '../supabase';
 
 export default function AssetsPage() {
   // Form state

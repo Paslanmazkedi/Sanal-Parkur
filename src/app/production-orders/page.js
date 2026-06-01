@@ -5,7 +5,7 @@
 
 'use client';
 import { useState, useEffect } from 'react';
-import { supabase } from '../../../supabase';
+import { supabase } from '../supabase';
 
 const STAGE_BADGES = {
   4: { label: 'Başlamadı', className: 'bg-sky-500' },

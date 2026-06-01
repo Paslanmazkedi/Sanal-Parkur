@@ -1,6 +1,6 @@
 'use client';
 import { useState, useEffect } from 'react';
-import { supabase } from '../../../supabase';
+import { supabase } from '../supabase';
 
 export default function SimulatorPage() {
   const [orders, setOrders] = useState([]);
@@ -28,16 +28,19 @@ export default function SimulatorPage() {
     setResult(null);
 
     const payload = {
-      p_order_id: selectedOrderId ? Number(selectedOrderId) : null,
-      type: Number(signalType),
-      start_counter: Number(counterValue),
-      asset_id: selectedAssetId ? Number(selectedAssetId) : null
+      p_order_id: Number(selectedOrderId),
+      asset_id: Number(selectedAssetId),
+      status_code: signalType === 1 ? 'RUNNING' : signalType === 2 ? 'PAUSED' : 'COMPLETED',
+      counter_value: Number(counterValue),
     };
 
     try {
-      const response = await fetch('/api/operation', {
+const response = await fetch('/api/wex', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+headers: {
+  'Content-Type': 'application/json',
+'x-wex-api-key': '9dd683bc664e5727a20b6f78760bae8652dd3c47e601eaa605d541bc01ef589e',
+},
         body: JSON.stringify(payload)
       });
       const resData = await response.json();

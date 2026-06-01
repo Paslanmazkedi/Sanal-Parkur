@@ -1,12 +1,7 @@
+import { supabase } from '../../supabase';
 // Next.js Route Handler for IoT Gateway integration// This endpoint returns the first pending production order with is_stage = 4 (Başlamadı)
 // and marks it as sent by updating is_stage and prod_order_stage to 0 (Operatöre Gönderildi).
 // It returns a JSON payload with uppercase keys matching Workcube standards.
-
-import { createClient } from '@supabase/supabase-js';
-
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
-const supabase = createClient(supabaseUrl, supabaseAnonKey);
 
 export async function GET() {
   // Find the first order with is_stage = 4 (Başlamadı)

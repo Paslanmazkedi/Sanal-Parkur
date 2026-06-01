@@ -1,6 +1,6 @@
 'use client';
 import { useState, useEffect } from 'react';
-import { supabase } from '../../supabase';
+import { supabase } from '../supabase';
 
 
 export default function Dashboard() {
@@ -25,6 +25,10 @@ export default function Dashboard() {
         <h1 className="text-4xl font-black tracking-tight text-white">Entegrasyon Kontrol Paneli</h1>
         <p className="text-slate-400 text-sm mt-2">WEX katmanı ile akıllı fabrikadan gelen eşzamanlı verilerin yönetim konsolu.</p>
       </header>
+<div className="flex space-x-4 mb-4">
+  <a href="/simulator" className="text-sky-400 hover:underline">Simulator</a>
+  <a href="/iot-gateway" className="text-sky-400 hover:underline">IoT Gateway</a>
+</div>
 
       {/* SAYAÇ KARTLARI (Cam Efektli & Hover Glow) */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
