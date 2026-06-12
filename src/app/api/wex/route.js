@@ -1,133 +1,264 @@
-import { supabase } from '../../supabase';
+import { NextResponse } from 'next/server';
+import { serverSupabase as supabase } from '@/lib/serverSupabase';
+import { authenticateProductionDevice, getClientIp } from '@/lib/productionDeviceAuth';
 
-/**
- * POST /api/wex
- * Expected body:
- * {
- *   p_order_id: number,
- *   asset_id: number,
- *   status_code: string,   // RUNNING, PAUSED, COMPLETED
- *   counter_value: number
- * }
- */
-export async function POST(request) {
-  // Verify API key from header
-  const apiKey = request.headers.get('x-wex-api-key');
-  if (!apiKey || apiKey !== process.env.WEX_API_KEY) {
-    return new Response(
-      JSON.stringify({ error: "Geçersiz veya eksik API Key!" }),
-      { status: 401, headers: { 'Content-Type': 'application/json' } }
-    );
-  }
+const STAGE_ALIASES = ['is_stage', 'IS_STAGE'];
+const COUNTER_ALIASES = ['counter_value', 'COUNTER_VALUE', 'result_amount', 'RESULT_AMOUNT'];
+const ORDER_NO_ALIASES = ['p_order_no', 'P_ORDER_NO', 'order_no', 'ORDER_NO', 'order_code', 'ORDER_CODE'];
+const LEGACY_ORDER_ID_ALIASES = ['p_order_id', 'P_ORDER_ID', 'order_id', 'ORDER_ID'];
+const STATION_ID_ALIASES = ['station_id', 'STATION_ID'];
 
-  try {
-const {
-  p_order_id,
-  asset_id,
-  status_code,
-  counter_value,
-} = await request.json();
-
-if (
-  typeof p_order_id !== 'number' ||
-  typeof asset_id !== 'number' ||
-  typeof status_code !== 'string' ||
-  typeof counter_value !== 'number'
-) {
-      return new Response(
-        JSON.stringify({
-          success: false,
-          message: 'Invalid payload',
-        }),
-        { status: 400, headers: { 'Content-Type': 'application/json' } }
-      );
-    }
-
-    // 1️⃣ Update production_orders
-    const { data: order, error: orderError } = await supabase
-      .from('production_orders')
-      .select('*')
-      .eq('p_order_id', p_order_id)
-      .single();
-
-    if (orderError) {
-      console.error('Supabase order fetch error:', orderError);
-      return new Response(
-        JSON.stringify({
-          success: false,
-          message: 'Order not found',
-        }),
-        { status: 404, headers: { 'Content-Type': 'application/json' } }
-      );
-    }
-
-let newStage = order.is_stage;
-const updates = {};
-
-if (status_code === 'RUNNING') {
-  newStage = 1; // Devam Ediyor
-} else if (status_code === 'PAUSED') {
-  newStage = 2; // Duraklatıldı
-} else if (status_code === 'COMPLETED') {
-  newStage = 3; // Tamamlandı
-  updates.finish_date_real = new Date().toISOString();
+function firstPresent(source, keys) {
+  return keys.find((key) => Object.prototype.hasOwnProperty.call(source, key));
 }
 
-// Update result_amount (replace or add)
-updates.result_amount = counter_value;
+function numberOrNull(value) {
+  if (value === undefined || value === null || value === '') return null;
+  const parsed = Number(value);
+  return Number.isFinite(parsed) ? parsed : null;
+}
 
-// Apply stage change
-updates.is_stage = newStage;
+async function writeProductionLog({ direction, ip, event, outcome, payload, error, details, logErrors }) {
+  const logPayload = {
+    direction,
+    ip,
+    payload: {
+      integration: 'wex',
+      domain: 'production',
+      event,
+      outcome,
+      error: error || null,
+      details: details || null,
+      payload,
+    },
+  };
 
-    const { error: updateError } = await supabase
-      .from('production_orders')
-      .update(updates)
-      .eq('p_order_id', p_order_id);
+  const { error: logError } = await supabase.schema('production').from('logs').insert(logPayload);
+  if (logError) {
+    console.error('WEX log insert error:', logError);
+    logErrors?.push(logError.message || 'Unknown log insert error');
+  }
+}
 
-    if (updateError) {
-      console.error('Supabase order update error:', updateError);
-      return new Response(
-        JSON.stringify({
-          success: false,
-          message: 'Failed to update order',
-        }),
-        { status: 500, headers: { 'Content-Type': 'application/json' } }
+export async function POST(request) {
+  let body = {};
+  let ip = 'unknown';
+  const logErrors = [];
+
+  try {
+    ip = getClientIp(request);
+    body = await request.json();
+
+    const configuredApiKey = process.env.WEX_API_KEY;
+    const requestApiKey = request.headers.get('x-wex-api-key');
+    const hasDeviceKey = Boolean(request.headers.get('x-device-key') || body.device_key || body.DEVICE_KEY);
+    const hasValidGlobalApiKey = !configuredApiKey || requestApiKey === configuredApiKey;
+
+    if (!hasDeviceKey && !hasValidGlobalApiKey) {
+      return NextResponse.json({ success: false, error: 'Gecersiz API key.' }, { status: 401 });
+    }
+
+    const deviceAuth = await authenticateProductionDevice({ request, body, ip, supabase });
+
+    if (!deviceAuth.ok && (hasDeviceKey || !hasValidGlobalApiKey)) {
+      return NextResponse.json({ success: false, error: deviceAuth.error, logErrors }, { status: deviceAuth.status });
+    }
+
+    const deviceDetails = {
+      auth_mode: deviceAuth.ok ? deviceAuth.authMode : 'wex-api-key',
+      device: deviceAuth.device
+        ? {
+            id: deviceAuth.device.id,
+            name: deviceAuth.device.device_name,
+            machine_key: deviceAuth.device.machine_key,
+          }
+        : null,
+      machine: deviceAuth.machine
+        ? {
+            id: deviceAuth.machine.id,
+            code: deviceAuth.machine.machine_code,
+            name: deviceAuth.machine.machine_name,
+            machine_key: deviceAuth.machine.machine_key,
+            station_id: deviceAuth.machine.station_id,
+          }
+        : null,
+      machine_key: deviceAuth.machineKey || body.machine_key || body.MACHINE_KEY || null,
+      station_id: deviceAuth.stationId,
+    };
+
+    await writeProductionLog({
+      direction: 'incoming',
+      ip,
+      event: 'wex_signal_received',
+      outcome: 'RECEIVED',
+      payload: body,
+      details: deviceDetails,
+      logErrors,
+    });
+
+    const orderNoKey = firstPresent(body, ORDER_NO_ALIASES);
+    const legacyOrderIdKey = firstPresent(body, LEGACY_ORDER_ID_ALIASES);
+    const stationIdKey = firstPresent(body, STATION_ID_ALIASES);
+    const stageKey = firstPresent(body, STAGE_ALIASES);
+    const counterKey = firstPresent(body, COUNTER_ALIASES);
+
+    const orderNo = orderNoKey ? String(body[orderNoKey]).trim() : '';
+    const legacyOrderId = legacyOrderIdKey ? numberOrNull(body[legacyOrderIdKey]) : null;
+    const stationId = stationIdKey ? numberOrNull(body[stationIdKey]) : deviceAuth.stationId;
+
+    const updatePayload = {};
+
+    if (stageKey) {
+      const stage = numberOrNull(body[stageKey]);
+      if (stage === null) {
+        await writeProductionLog({
+          direction: 'outgoing',
+          ip,
+          event: 'production_order_update',
+          outcome: 'FAILED',
+          error: 'Invalid is_stage value',
+          payload: body,
+          details: deviceDetails,
+          logErrors,
+        });
+        return NextResponse.json({ success: false, error: 'is_stage sayisal olmali.', logErrors }, { status: 400 });
+      }
+      updatePayload.is_stage = stage;
+    }
+
+    if (counterKey) {
+      const counterValue = numberOrNull(body[counterKey]);
+      if (counterValue === null) {
+        await writeProductionLog({
+          direction: 'outgoing',
+          ip,
+          event: 'production_order_update',
+          outcome: 'FAILED',
+          error: 'Invalid counter_value value',
+          payload: body,
+          details: deviceDetails,
+          logErrors,
+        });
+        return NextResponse.json({ success: false, error: 'counter_value sayisal olmali.', logErrors }, { status: 400 });
+      }
+      updatePayload.counter_value = counterValue;
+    }
+
+    if (Object.keys(updatePayload).length === 0) {
+      await writeProductionLog({
+        direction: 'outgoing',
+        ip,
+        event: 'production_order_update',
+        outcome: 'FAILED',
+        error: 'No updatable fields',
+        payload: body,
+        details: deviceDetails,
+        logErrors,
+      });
+      return NextResponse.json(
+        { success: false, error: 'Guncellenecek alan bulunamadi. is_stage veya counter_value gonderin.', logErrors },
+        { status: 400 },
       );
     }
 
-    // 2️⃣ Insert log into production_order_operations (or fallback table)
-const logTable = 'production_order_operations';
-const { error: logError } = await supabase.from(logTable).insert([
-  {
-    p_order_id,
-    asset_id,
-    status_code,
-    counter_value,
-    created_at: new Date().toISOString(),
-  },
-]);
+    let query = supabase
+      .schema('production')
+      .from('production_orders')
+      .update(updatePayload);
 
-    if (logError) {
-      console.error('Supabase log insert error:', logError);
-      // Continue – the main update succeeded, but log failed
+    if (orderNo) {
+      query = query.ilike('p_order_no', orderNo);
+    } else if (legacyOrderId !== null) {
+      query = query.eq('p_order_id', legacyOrderId);
+    } else {
+      await writeProductionLog({
+        direction: 'outgoing',
+        ip,
+        event: 'production_order_update',
+        outcome: 'FAILED',
+        error: 'Missing order identifier',
+        payload: body,
+        details: deviceDetails,
+        logErrors,
+      });
+      return NextResponse.json(
+        { success: false, error: 'p_order_no gonderilmeli.', logErrors },
+        { status: 400 },
+      );
     }
 
-    // 3️⃣ Success response
-    return new Response(
-      JSON.stringify({
-        success: true,
-        message: 'Workcube ERP updated successfully',
-      }),
-      { status: 200, headers: { 'Content-Type': 'application/json' } }
-    );
+    if (stationId !== null) query = query.eq('station_id', stationId);
+
+    const { data, error } = await query.select('p_order_id,p_order_no,station_id,is_stage,counter_value');
+
+    if (error) {
+      console.error('WEX production order update error:', error);
+      await writeProductionLog({
+        direction: 'outgoing',
+        ip,
+        event: 'production_order_update',
+        outcome: 'FAILED',
+        error: error.message,
+        payload: body,
+        details: deviceDetails,
+        logErrors,
+      });
+      return NextResponse.json({ success: false, error: error.message, logErrors }, { status: 500 });
+    }
+
+    if (!data || data.length === 0) {
+      const criteria = {
+        p_order_no: orderNo || null,
+        legacy_p_order_id: legacyOrderId,
+        station_id: stationId,
+      };
+      await writeProductionLog({
+        direction: 'outgoing',
+        ip,
+        event: 'production_order_update',
+        outcome: 'FAILED',
+        error: 'No matching order',
+        payload: body,
+        details: { ...deviceDetails, criteria },
+        logErrors,
+      });
+      return NextResponse.json(
+        { success: false, error: 'Eslesen uretim emri bulunamadi.', criteria, logErrors },
+        { status: 404 },
+      );
+    }
+
+    await writeProductionLog({
+      direction: 'outgoing',
+      ip,
+      event: 'production_order_update',
+      outcome: 'SUCCESS',
+      payload: body,
+      details: {
+        ...deviceDetails,
+        update: updatePayload,
+        updated_rows: data,
+      },
+      logErrors,
+    });
+
+    return NextResponse.json({
+      success: true,
+      updatedCount: data.length,
+      updatedRows: data,
+      logErrors,
+    });
   } catch (err) {
-    console.error('Unexpected error in WEX route:', err);
-    return new Response(
-      JSON.stringify({
-        success: false,
-        message: 'Internal server error',
-      }),
-      { status: 500, headers: { 'Content-Type': 'application/json' } }
-    );
+    console.error('WEX route error:', err);
+    await writeProductionLog({
+      direction: 'outgoing',
+      ip,
+      event: 'production_order_update',
+      outcome: 'FAILED',
+      error: err.message,
+      payload: body,
+      logErrors,
+    });
+    return NextResponse.json({ success: false, error: 'Internal Server Error', logErrors }, { status: 500 });
   }
 }

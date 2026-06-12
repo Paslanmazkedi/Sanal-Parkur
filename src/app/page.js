@@ -5,16 +5,29 @@ import { supabase } from '../supabase';
 
 export default function Dashboard() {
   const [stats, setStats] = useState({ orders: 0, assets: 0, operations: 0 });
+  const [recentLogs, setRecentLogs] = useState([]);
   const [recentOps, setRecentOps] = useState([]);
 
   useEffect(() => {
     const loadDashboardData = async () => {
       const { count: oCount } = await supabase.from('production_orders').select('*', { count: 'exact', head: true });
-        const { count: aCount } = await supabase.from('workstations').select('*', { count: 'exact', head: true });
-      const { data: ops, count: opCount } = await supabase.from('production_order_operations').select('*', { count: 'exact' }).order('id', { ascending: false }).limit(5);
+      const { count: aCount } = await supabase.from('workstations').select('*', { count: 'exact', head: true });
+      const { data: ops, count: opCount } = await supabase
+        .from('production_order_operations')
+        .select('*', { count: 'exact' })
+        .order('id', { ascending: false })
+        .limit(5);
 
       setStats({ orders: oCount || 0, assets: aCount || 0, operations: opCount || 0 });
       if (ops) setRecentOps(ops);
+
+      // Load recent logs (last 5)
+      const { data: logs, error } = await supabase
+        .from('logs')
+        .select('id, ip, payload, direction, created_at')
+        .order('created_at', { ascending: false })
+        .limit(5);
+      if (!error) setRecentLogs(logs);
     };
     loadDashboardData();
   }, []);
@@ -23,7 +36,7 @@ export default function Dashboard() {
     <div className="max-w-6xl mx-auto space-y-8">
       <header>
         <h1 className="text-4xl font-black tracking-tight text-white">Entegrasyon Kontrol Paneli</h1>
-        <p className="text-slate-400 text-sm mt-2">WEX katmanı ile akıllı fabrikadan gelen eşzamanlı verilerin yönetim konsolu.</p>
+        <p className="text-slate-400 text-sm mt-2">Entegrasyon katmanı ile akıllı fabrikadan gelen eşzamanlı verilerin yönetim konsolu.</p>
       </header>
 <div className="flex space-x-4 mb-4">
   <a href="/simulator" className="text-sky-400 hover:underline">Simulator</a>
@@ -46,12 +59,46 @@ export default function Dashboard() {
         </div>
       </div>
 
+      {/* SON 5 LOG KAYDI */}
+      <div className="bg-slate-900/40 border border-slate-800/80 rounded-2xl p-4 shadow-md">
+        <h2 className="text-lg font-bold text-slate-200 mb-2">Son 5 Log Kaydı</h2>
+        <div className="overflow-x-auto">
+          <table className="w-full text-left text-xs text-slate-400 border-collapse">
+            <thead className="bg-slate-900/80 text-slate-300">
+              <tr>
+                <th className="p-2">IP</th>
+                <th className="p-2">Sorgu</th>
+                <th className="p-2">Veri</th>
+                <th className="p-2">Yön</th>
+                <th className="p-2">Tarih</th>
+              </tr>
+            </thead>
+            <tbody>
+              {recentLogs.length === 0 && (
+                <tr>
+                  <td colSpan="5" className="p-4 text-center text-slate-500">Log kaydı bulunamadı.</td>
+                </tr>
+              )}
+              {recentLogs.map((log) => (
+                <tr key={log.id} className="odd:bg-slate-800 even:bg-slate-700">
+                  <td className="p-2 border-r border-slate-600">{log.ip}</td>
+                  <td className="p-2 border-r border-slate-600 break-all">{log.payload?.event || '-'}</td>
+                  <td className="p-2 border-r border-slate-600 break-all">{JSON.stringify(log.payload)}</td>
+                  <td className="p-2 border-r border-slate-600 capitalize">{log.direction}</td>
+                  <td className="p-2">{new Date(log.created_at).toLocaleString()}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </div>
+
       {/* CANLI AKIŞ TABLOSU */}
       <div className="bg-slate-900/40 border border-slate-800/80 rounded-2xl p-6 shadow-2xl backdrop-blur-sm">
         <div className="flex items-center justify-between mb-4">
           <h2 className="text-lg font-bold text-slate-200 font-mono flex items-center gap-2">
             <span className="h-2 w-2 rounded-full bg-emerald-500 animate-ping"></span>
-            Canlı WEX Hattı Veri Akışı (Son 5 Kayıt)
+            Canlı IoT Hattı Veri Akışı (Son 5 Kayıt)
           </h2>
         </div>
         <div className="overflow-hidden rounded-xl border border-slate-800/60 bg-black/20">

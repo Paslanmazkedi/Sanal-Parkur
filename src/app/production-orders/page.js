@@ -7,6 +7,9 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '../supabase';
 
+// Prevent caching of the page
+export const dynamic = 'force-dynamic';
+
 const STAGE_BADGES = {
   4: { label: 'Başlamadı', className: 'bg-sky-500' },
   0: { label: 'Operatöre Gönderildi', className: 'bg-amber-500' },
@@ -40,11 +43,27 @@ export default function ProductionOrdersPage() {
     if (data) setWorkstations(data);
   };
 
+  // Load production orders using the new Workcube schema and column set
   const loadOrders = async () => {
-    const { data: o } = await supabase
+    // Try to fetch with explicit column list; if it fails, fall back to selecting all columns
+    // Select fields that exist in the updated schema. Include fallbacks for optional fields.
+    let response = await supabase
+      .schema('production')
       .from('production_orders')
-      .select('p_order_id,p_order_no,product_name2,lot_no,quantity,station_id,is_stage,result_amount')
+      .select('p_order_id,p_order_no,product_name2,quantity,counter_value,lot_no,station_id,is_stage')
       .order('p_order_id', { ascending: false });
+    if (response.error) {
+      console.error('Selective fetch error, falling back to *:', response.error);
+      response = await supabase
+        .schema('production')
+        .from('production_orders')
+        .select('*')
+        .order('p_order_id', { ascending: false });
+    }
+    const { data: o, error } = response;
+    if (error) {
+      console.error('Failed to load production orders:', error);
+    }
     if (o) setOrders(o);
   };
 
@@ -81,10 +100,15 @@ export default function ProductionOrdersPage() {
     return ws ? ws.station_name : 'Bilinmiyor';
   };
 
-  const renderBadge = (stage) => {
-    const badge = STAGE_BADGES[stage] || { label: 'Bilinmiyor', className: 'bg-gray-500' };
+  // Render status badge based on the new status_id values
+  // Render status badge with Workcube standard colors and safe status extraction
+  const renderBadge = (rawStatus) => {
+    // Supabase may return an object for foreign key relations
+    const currentStage = typeof rawStatus === 'object' ? rawStatus?.is_stage : rawStatus;
+    const stage = currentStage != null ? currentStage : 0; // default to 0 (Açık)
+    const badge = STAGE_BADGES[stage] || STAGE_BADGES[0];
     return (
-      <span className={`${badge.className} text-white font-mono text-[11px] font-bold px-2.5 py-1 rounded-md`}>
+      <span className={`inline-flex items-center rounded-md px-2 py-1 text-xs font-medium ${badge.className}`}>
         {badge.label}
       </span>
     );
@@ -237,8 +261,8 @@ export default function ProductionOrdersPage() {
                   <td className="py-3 px-3 text-slate-300 font-mono">{o.lot_no}</td>
                   <td className="py-3 px-3 text-slate-300">{getStationName(o.station_id)}</td>
                   <td className="py-3 px-3 text-slate-300">{o.quantity}</td>
-                  <td className="py-3 px-3 text-slate-300">{o.result_amount}</td>
-                  <td className="py-3 px-3">{renderBadge(o.is_stage)}</td>
+                  <td className="py-3 px-3 text-slate-300">{o.counter_value ?? 0}</td>
+                  <td className="py-3 px-3" style={{ minWidth: '100px' }}>{renderBadge(o.is_stage)}</td>
                 </tr>
               ))}
             </tbody>
