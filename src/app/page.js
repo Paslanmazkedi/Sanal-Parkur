@@ -59,39 +59,7 @@ export default function Dashboard() {
         </div>
       </div>
 
-      {/* SON 5 LOG KAYDI */}
-      <div className="bg-slate-900/40 border border-slate-800/80 rounded-2xl p-4 shadow-md">
-        <h2 className="text-lg font-bold text-slate-200 mb-2">Son 5 Log Kaydı</h2>
-        <div className="overflow-x-auto">
-          <table className="w-full text-left text-xs text-slate-400 border-collapse">
-            <thead className="bg-slate-900/80 text-slate-300">
-              <tr>
-                <th className="p-2">IP</th>
-                <th className="p-2">Sorgu</th>
-                <th className="p-2">Veri</th>
-                <th className="p-2">Yön</th>
-                <th className="p-2">Tarih</th>
-              </tr>
-            </thead>
-            <tbody>
-              {recentLogs.length === 0 && (
-                <tr>
-                  <td colSpan="5" className="p-4 text-center text-slate-500">Log kaydı bulunamadı.</td>
-                </tr>
-              )}
-              {recentLogs.map((log) => (
-                <tr key={log.id} className="odd:bg-slate-800 even:bg-slate-700">
-                  <td className="p-2 border-r border-slate-600">{log.ip}</td>
-                  <td className="p-2 border-r border-slate-600 break-all">{log.payload?.event || '-'}</td>
-                  <td className="p-2 border-r border-slate-600 break-all">{JSON.stringify(log.payload)}</td>
-                  <td className="p-2 border-r border-slate-600 capitalize">{log.direction}</td>
-                  <td className="p-2">{new Date(log.created_at).toLocaleString()}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      </div>
+      
 
       {/* CANLI AKIŞ TABLOSU */}
       <div className="bg-slate-900/40 border border-slate-800/80 rounded-2xl p-6 shadow-2xl backdrop-blur-sm">
@@ -135,6 +103,48 @@ export default function Dashboard() {
                   <td className="p-4 font-mono text-white text-sm font-semibold">{op.start_counter} m</td>
                 </tr>
               ))}
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      {/* SON 5 LOG KAYDI */}
+      <div className="bg-slate-900/40 border border-slate-800/80 rounded-2xl p-4 shadow-md">
+        <h2 className="text-lg font-bold text-slate-200 mb-2">Son 5 Log Kaydı</h2>
+        <div className="overflow-x-auto">
+          <table className="w-full text-left text-xs text-slate-400 border-collapse">
+            <thead className="bg-slate-900/80 text-slate-300">
+                <tr>
+                  <th className="p-2">Sorgu</th>
+                  <th className="p-2">Yön</th>
+                  <th className="p-2">Tarih</th>
+                  <th className="p-2">Detay</th>
+                  <th className="p-2">Durum</th>
+                  <th className="p-2">Cihaz</th>
+                </tr>
+              </thead>
+            <tbody>
+              {recentLogs.length === 0 && (
+                <tr>
+                  <td colSpan="6" className="p-4 text-center text-slate-500">Log kaydı bulunamadı.</td>
+                </tr>
+              )}
+                  {recentLogs.map((log) => (
+                    <tr key={log.id} className="odd:bg-slate-800 even:bg-slate-700">
+                      {/* Sorgu */}
+                      <td className="p-2 border-r border-slate-600 break-all">{log.payload?.event || '-'}</td>
+                      {/* Yön */}
+                      <td className="p-2 border-r border-slate-600 capitalize">{log.direction}</td>
+                      {/* Tarih */}
+                      <td className="p-2 border-r border-slate-600">{new Date(log.created_at).toLocaleString()}</td>
+                      {/* Detay - show a key that identifies the source, e.g., p_order_no or similar */}
+                      <td className="p-2 border-r border-slate-600 break-all">{log.payload?.p_order_no || log.payload?.order_no || '-'}</td>
+                      {/* Durum - assume a status field in payload */}
+                      <td className="p-2 border-r border-slate-600">{log.payload?.status || (log.payload?.success ? 'Başarılı' : 'Başarısız') || '-'}</td>
+                      {/* Cihaz - assume device info in payload */}
+                      <td className="p-2">{log.payload?.device || log.payload?.asset_id || '-'}</td>
+                    </tr>
+                  ))}
             </tbody>
           </table>
         </div>
