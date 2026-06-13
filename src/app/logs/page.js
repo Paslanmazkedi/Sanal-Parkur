@@ -6,9 +6,9 @@ import { useEffect, useState, Fragment } from "react";
 import { supabase } from "../supabase";
 
 const FILTERS = [
-  { value: "all", label: "Tümü" },
-  { value: "incoming", label: "Gelen" },
-  { value: "outgoing", label: "Giden" },
+  { value: "all", label: "Tüm Akış" },
+  { value: "incoming", label: "Gelen paket" },
+  { value: "outgoing", label: "Gönderilen Paket" },
 ];
 
 function getOutcomeClass(outcome) {
@@ -22,6 +22,30 @@ function getLogTitle(log) {
   const event = payload.event || "log";
   const orderNo = payload.payload?.p_order_no || payload.details?.criteria?.p_order_no;
   return orderNo ? `${event} / ${orderNo}` : event;
+}
+
+function getDirectionMeta(direction) {
+  if (direction === "incoming") {
+    return {
+      label: "Gelen Paket",
+      description: "Saha/WEX'ten Sanal Parkur'a gelen paket",
+      className: "bg-sky-500/15 text-sky-300 border-sky-500/30",
+    };
+  }
+
+  if (direction === "outgoing") {
+    return {
+      label: "Gönderilen Paket",
+      description: "Paket işlendikten sonra oluşan sistem cevabı",
+      className: "bg-amber-500/15 text-amber-300 border-amber-500/30",
+    };
+  }
+
+  return {
+    label: direction || "Bilinmiyor",
+    description: "Akış yönü tanımlı değil",
+    className: "bg-slate-500/15 text-slate-300 border-slate-500/30",
+  };
 }
 
 export default function LogPage() {
@@ -109,8 +133,9 @@ export default function LogPage() {
           <thead className="bg-slate-950/70 text-left text-xs uppercase tracking-wider text-slate-400">
                <tr>
                  <th className="px-3 py-3">Cihaz</th>
-                 <th className="px-3 py-3">Sorgu</th>
-                 <th className="px-3 py-3">Yön</th>
+                 <th className="px-3 py-3">Kayıt</th>
+                 <th className="px-3 py-3">Akış</th>
+                 <th className="px-3 py-3">Sonuç</th>
                  <th className="px-3 py-3">Tarih</th>
                  <th className="px-3 py-3">İşlem</th>
                </tr>
@@ -118,7 +143,7 @@ export default function LogPage() {
           <tbody className="divide-y divide-slate-800">
             {logs.length === 0 && (
               <tr>
-                <td colSpan="7" className="px-3 py-8 text-center text-slate-500">
+                <td colSpan="6" className="px-3 py-8 text-center text-slate-500">
                   Henüz log kaydı yok.
                 </td>
               </tr>
@@ -139,10 +164,9 @@ export default function LogPage() {
                    const payload = log.payload || {};
                    const src = payload.payload || {};
                    const device = src.station_id ? `İstasyon ${src.station_id}` : "-";
-                   const query = src.p_order_no || "-";
-                   const directionLabel = (
-                     <span className="inline-flex rounded-md border px-2 py-1 text-xs font-semibold bg-sky-500/15 text-sky-300 border-sky-500/30">IN</span>
-                   );
+                   const query = getLogTitle(log);
+                   const directionMeta = getDirectionMeta(log.direction);
+                   const outcome = payload.outcome || "-";
                    const time = new Date(log.created_at).toLocaleTimeString('tr-TR', { hour12: false });
                    const isOpen = openRowId === log.id;
                    return (
@@ -150,7 +174,19 @@ export default function LogPage() {
                        <tr className="align-top odd:bg-slate-950/20">
                          <td className="px-3 py-3 text-slate-300">{device}</td>
                          <td className="px-3 py-3 text-slate-300">{query}</td>
-                         <td className="px-3 py-3 text-slate-300">{directionLabel}</td>
+                         <td className="px-3 py-3 text-slate-300">
+                           <span
+                             className={`inline-flex rounded-md border px-2 py-1 text-xs font-semibold ${directionMeta.className}`}
+                             title={directionMeta.description}
+                           >
+                             {directionMeta.label}
+                           </span>
+                         </td>
+                         <td className="px-3 py-3 text-slate-300">
+                           <span className={`inline-flex rounded-md border px-2 py-1 text-xs font-semibold ${getOutcomeClass(outcome)}`}>
+                             {outcome}
+                           </span>
+                         </td>
                          <td className="px-3 py-3 text-slate-300">{time}</td>
                          <td className="px-3 py-3">
                            <button
@@ -163,7 +199,7 @@ export default function LogPage() {
                        </tr>
                        {isOpen && (
                          <tr className="bg-slate-800/30">
-                           <td colSpan={5} className="px-3 py-2">
+                           <td colSpan={6} className="px-3 py-2">
                              <pre className="bg-gray-900 text-green-400 p-3 rounded text-xs overflow-auto max-h-45 font-mono">
                                {JSON.stringify(payload, null, 2)}
                              </pre>
