@@ -3,8 +3,10 @@
 // Simple placeholder Navbar component. Adjust styling and content as needed.
 export default function Navbar() {
   return (
-    <header className="bg-gray-800 text-white p-4 flex items-center justify-between">
-      <h1 className="text-lg font-semibold">Wex Entegrasyon Paneli</h1>
+    <header className="border-b border-slate-800 bg-slate-900/80 px-4 py-3 backdrop-blur-sm md:px-8">
+      <h1 className="text-sm font-semibold tracking-wide text-slate-300 md:text-base">
+        Wex Entegrasyon Paneli
+      </h1>
     </header>
   );
   }
