@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { supabase } from '../../supabase';
+import BrandLogo from '../../components/BrandLogo';
 
 export default function LoginPage() {
   const router = useRouter();
@@ -35,8 +36,9 @@ export default function LoginPage() {
     <main className="min-h-screen bg-slate-950 text-slate-100 grid place-items-center px-6">
       <section className="w-full max-w-md rounded-lg border border-slate-800 bg-slate-900/70 p-8 shadow-2xl">
         <div className="mb-8">
-          <p className="text-xs font-mono uppercase tracking-widest text-emerald-400">Sanal Parkur</p>
-          <h1 className="mt-2 text-3xl font-black text-white">Giris Yap</h1>
+          <BrandLogo size="lg" asLink={false} tagline="Kontrol Odası" />
+          <h1 className="mt-6 text-2xl font-black text-white">Giriş Yap</h1>
+          <p className="mt-1 text-sm text-slate-400">Hesabınızla oturum açın</p>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-5">
