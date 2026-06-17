@@ -1,10 +1,11 @@
-"use client";
+'use client';
 
 import { usePathname, useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { supabase } from '../../supabase';
 import Sidebar from '../../components/Sidebar';
 import Navbar from '../../components/Navbar';
+import MobileNav from '../../components/MobileNav';
 
 function AuthLoadingScreen() {
   return (
@@ -80,16 +81,21 @@ export default function LayoutWrapper({ children }) {
   }
 
   if (isLoginPage) {
-    return <div className="w-full min-h-screen">{children}</div>;
+    return <div className="w-full min-h-screen min-w-0 overflow-x-hidden">{children}</div>;
   }
 
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-100">
+    <div className="min-h-screen min-w-0 overflow-x-hidden bg-slate-950 text-slate-100">
       <Sidebar user={user} />
-      <div className="flex min-h-screen flex-col md:ml-64">
+
+      <div className="flex min-h-screen w-full min-w-0 flex-col md:ml-64">
         <Navbar />
-        <main className="flex-1 p-4 pt-16 md:p-8 md:pt-8">{children}</main>
+        <main className="flex-1 min-w-0 overflow-x-hidden p-4 pb-24 md:p-8 md:pb-8">
+          <div className="mx-auto w-full min-w-0 max-w-full">{children}</div>
+        </main>
       </div>
+
+      <MobileNav />
     </div>
   );
 }

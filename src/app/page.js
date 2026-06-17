@@ -9,12 +9,15 @@ import { loadDashboardSnapshot } from '@/lib/dashboardMetrics';
 import { supabase } from '../supabase';
 
 const QUICK_LINKS = [
+  { href: '/uretim', label: 'Üretim Özeti', color: 'bg-emerald-500' },
   { href: '/oee', label: 'OEE Monitör', color: 'bg-emerald-500' },
   { href: '/station', label: 'Operatör Paneli', color: 'bg-sky-500' },
   { href: '/production-orders', label: 'Üretim Emirleri', color: 'bg-violet-500' },
   { href: '/assets', label: 'İstasyonlar', color: 'bg-amber-500' },
+  { href: '/simulator', label: 'PLC Simülatörü', color: 'bg-slate-500' },
+  { href: '/iot-gateway', label: 'IoT Gateway', color: 'bg-violet-500' },
+  { href: '/lot-records', label: 'Lot Kayıtları', color: 'bg-rose-500' },
   { href: '/logs', label: 'Loglar', color: 'bg-rose-500' },
-  { href: '/simulator', label: 'Simülatör', color: 'bg-slate-500' },
 ];
 
 function KpiTile({ label, value, hint, tone = 'text-white', href }) {
@@ -217,8 +220,8 @@ export default function Dashboard() {
             title="Üretim"
             subtitle="Emirler ve saha operasyonları"
             borderTone="border-emerald-500/20"
-            href="/production-orders"
-            hrefLabel="Emirler →"
+            href="/uretim"
+            hrefLabel="Üretim →"
           >
             <div className="flex flex-wrap gap-y-4">
               <DomainStat label="Toplam emir" value={production?.totalOrders ?? 0} />
@@ -231,8 +234,8 @@ export default function Dashboard() {
             title="Kalite"
             subtitle="Fire ve kalite kontrol"
             borderTone="border-rose-500/20"
-            href="/station"
-            hrefLabel="Operatör →"
+            href="/kalite"
+            hrefLabel="Kalite →"
           >
             {quality?.scrapLines > 0 ? (
               <div className="flex flex-wrap gap-y-4">
@@ -250,8 +253,8 @@ export default function Dashboard() {
             title="Servis"
             subtitle="Makine ve cihaz durumu"
             borderTone="border-sky-500/20"
-            href="/assets"
-            hrefLabel="İstasyonlar →"
+            href="/servis"
+            hrefLabel="Servis →"
           >
             {service?.moduleReady ? (
               <div className="flex flex-wrap gap-y-4">
@@ -270,8 +273,8 @@ export default function Dashboard() {
             title="IoT & Entegrasyon"
             subtitle="WEX logları ve PLC sinyalleri"
             borderTone="border-violet-500/20"
-            href="/logs"
-            hrefLabel="Loglar →"
+            href="/uretim"
+            hrefLabel="IoT modülleri →"
           >
             <div className="flex flex-wrap gap-y-4">
               <DomainStat label="Başarılı log" value={integration?.logSuccessCount ?? 0} tone="text-emerald-300" />
