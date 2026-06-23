@@ -10,7 +10,7 @@ import { supabase } from '../supabase';
 
 const QUICK_LINKS = [
   { href: '/uretim', label: 'Üretim Özeti', color: 'bg-emerald-500' },
-  { href: '/iot-entegrasyon', label: 'IoT Entegrasyon', color: 'bg-violet-500' },
+  { href: '/iot-entegrasyon/uretim-emirleri', label: 'Workcube Üretim', color: 'bg-violet-500' },
   { href: '/oee', label: 'OEE Monitör', color: 'bg-emerald-500' },
   { href: '/station', label: 'Operatör Paneli', color: 'bg-sky-500' },
   { href: '/production-orders', label: 'Üretim Emirleri', color: 'bg-violet-500' },

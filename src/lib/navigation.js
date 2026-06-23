@@ -6,10 +6,14 @@ export const SECTION_HREFS = {
   service: '/servis',
 };
 
+export const WORKCUBE_SECTION_LABEL = 'Workcube Üretim';
+
+export const WORKCUBE_DEFAULT_HREF = '/iot-entegrasyon/uretim-emirleri';
+
 export const MOBILE_TABS = [
   { key: 'general', href: SECTION_HREFS.general, label: 'Genel' },
   { key: 'production', href: SECTION_HREFS.production, label: 'Üretim' },
-  { key: 'iot', href: SECTION_HREFS.iot, label: 'IoT' },
+  { key: 'iot', href: WORKCUBE_DEFAULT_HREF, label: 'Workcube' },
   { key: 'quality', href: SECTION_HREFS.quality, label: 'Kalite' },
   { key: 'service', href: SECTION_HREFS.service, label: 'Servis' },
 ];
@@ -24,7 +28,7 @@ export const PRODUCTION_LINKS = [
 ];
 
 export const W3_LINKS = [
-  { href: '/iot-entegrasyon/uretim-emirleri', label: 'W3 Üretim Emirleri' },
+  { href: '/iot-entegrasyon/uretim-emirleri', label: 'Üretim' },
   { href: '/iot-entegrasyon/istasyonlar', label: 'W3 İstasyonlar' },
   { href: '/iot-entegrasyon/operator-paneli', label: 'W3 Operatör Paneli' },
   { href: '/iot-entegrasyon/loglar', label: 'W3 Log Kayıtları' },
@@ -36,11 +40,7 @@ export const IOT_TOOLS_LINKS = [
   { href: '/lot-records', label: 'Lot Kayıtları' },
 ];
 
-export const IOT_LINKS = [
-  { href: SECTION_HREFS.iot, label: 'IoT Entegrasyon Özeti' },
-  ...W3_LINKS,
-  ...IOT_TOOLS_LINKS,
-];
+export const IOT_LINKS = [...W3_LINKS, ...IOT_TOOLS_LINKS];
 
 export const PRODUCTION_PATHS = PRODUCTION_LINKS.map((item) => item.href);
 
@@ -61,7 +61,7 @@ export const PAGE_TITLES = {
   '/production-orders': 'Üretim Emirleri',
   '/assets': 'İstasyon Konfigürasyonu',
   '/logs': 'Entegrasyon Logları',
-  '/iot-entegrasyon/uretim-emirleri': 'W3 Üretim Emirleri',
+  '/iot-entegrasyon/uretim-emirleri': 'Üretim',
   '/iot-entegrasyon/istasyonlar': 'W3 İstasyonlar',
   '/iot-entegrasyon/operator-paneli': 'W3 Operatör Paneli',
   '/iot-entegrasyon/loglar': 'W3 Log Kayıtları',
@@ -73,7 +73,7 @@ export const PAGE_TITLES = {
 
 export const MORE_MENU_SECTIONS = [
   { title: 'Üretim', links: PRODUCTION_LINKS },
-  { title: 'Workcube W3', links: W3_LINKS },
+  { title: WORKCUBE_SECTION_LABEL, links: W3_LINKS },
   { title: 'IoT Araçları', links: IOT_TOOLS_LINKS },
 ];
 

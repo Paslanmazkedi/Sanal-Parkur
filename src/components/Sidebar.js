@@ -12,6 +12,7 @@ import {
   PRODUCTION_PATHS,
   SECTION_HREFS,
   W3_LINKS,
+  WORKCUBE_SECTION_LABEL,
   isExactOrNestedPath,
 } from '../lib/navigation';
 
@@ -166,24 +167,19 @@ export default function Sidebar({ user }) {
 
           <div>
             <GroupButton
-              label="IoT Entegrasyon"
+              label={WORKCUBE_SECTION_LABEL}
               isOpen={iotOpen}
               onToggle={() => setIotOpen((open) => !open)}
             />
             {iotOpen && (
               <div className="space-y-1 pl-2">
-                <NavLink href={SECTION_HREFS.iot}>IoT Entegrasyon Özeti</NavLink>
-
-                <p className="px-4 pt-2 text-[10px] font-semibold uppercase tracking-wider text-violet-400/80">
-                  Workcube W3
-                </p>
                 {W3_LINKS.map((link) => (
-                  <NavLink key={link.href} href={link.href} nested>
+                  <NavLink key={link.href} href={link.href}>
                     {link.label}
                   </NavLink>
                 ))}
 
-                <p className="px-4 pt-2 text-[10px] font-semibold uppercase tracking-wider text-slate-500">
+                <p className="px-4 pt-3 text-[10px] font-semibold uppercase tracking-wider text-slate-500">
                   IoT Araçları
                 </p>
                 {IOT_TOOLS_LINKS.map((link) => (
