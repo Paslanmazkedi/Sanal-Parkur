@@ -1,20 +1,26 @@
 import https from 'node:https';
 import { URL } from 'node:url';
 
-let insecureAgent;
+let relaxedTlsAgent;
 
-function isTlsInsecureEnabled() {
-  return process.env.WEX_TLS_INSECURE === 'true';
+/**
+ * Workcube WEX cagrilari icin TLS dogrulama varsayilan kapali.
+ * Workcube sertifika zinciri duzeldiginde WEX_TLS_STRICT=true yapin.
+ */
+function shouldVerifyWorkcubeTls() {
+  if (process.env.WEX_TLS_STRICT === 'true') return true;
+  if (process.env.WEX_TLS_INSECURE === 'false') return true;
+  return false;
 }
 
 function getHttpsAgent() {
-  if (!isTlsInsecureEnabled()) return undefined;
+  if (shouldVerifyWorkcubeTls()) return undefined;
 
-  if (!insecureAgent) {
-    insecureAgent = new https.Agent({ rejectUnauthorized: false });
+  if (!relaxedTlsAgent) {
+    relaxedTlsAgent = new https.Agent({ rejectUnauthorized: false });
   }
 
-  return insecureAgent;
+  return relaxedTlsAgent;
 }
 
 export function formatWexFetchError(error) {
@@ -23,7 +29,7 @@ export function formatWexFetchError(error) {
   if (causeCode === 'UNABLE_TO_VERIFY_LEAF_SIGNATURE' || causeCode === 'CERT_HAS_EXPIRED') {
     return [
       'Workcube SSL sertifikasi dogrulanamadi.',
-      'Gelistirme icin .env.local dosyasina WEX_TLS_INSECURE=true ekleyin ve dev sunucusunu yeniden baslatin.',
+      'Varsayilan olarak TLS kontrolu kapali olmali; hata devam ederse ag/IP erisimini kontrol edin.',
     ].join(' ');
   }
 
