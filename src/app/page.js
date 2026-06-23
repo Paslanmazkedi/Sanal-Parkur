@@ -10,14 +10,12 @@ import { supabase } from '../supabase';
 
 const QUICK_LINKS = [
   { href: '/uretim', label: 'Üretim Özeti', color: 'bg-emerald-500' },
+  { href: '/iot-entegrasyon', label: 'IoT Entegrasyon', color: 'bg-violet-500' },
   { href: '/oee', label: 'OEE Monitör', color: 'bg-emerald-500' },
   { href: '/station', label: 'Operatör Paneli', color: 'bg-sky-500' },
   { href: '/production-orders', label: 'Üretim Emirleri', color: 'bg-violet-500' },
-  { href: '/assets', label: 'İstasyonlar', color: 'bg-amber-500' },
-  { href: '/simulator', label: 'PLC Simülatörü', color: 'bg-slate-500' },
-  { href: '/iot-gateway', label: 'IoT Gateway', color: 'bg-violet-500' },
-  { href: '/lot-records', label: 'Lot Kayıtları', color: 'bg-rose-500' },
-  { href: '/logs', label: 'Loglar', color: 'bg-rose-500' },
+  { href: '/kalite', label: 'Kalite Özeti', color: 'bg-rose-500' },
+  { href: '/servis', label: 'Servis Özeti', color: 'bg-sky-500' },
 ];
 
 function KpiTile({ label, value, hint, tone = 'text-white', href }) {
@@ -271,9 +269,9 @@ export default function Dashboard() {
 
           <DomainOverviewCard
             title="IoT & Entegrasyon"
-            subtitle="WEX logları ve PLC sinyalleri"
+            subtitle="Workcube W3 ve WEX modülleri"
             borderTone="border-violet-500/20"
-            href="/uretim"
+            href="/iot-entegrasyon"
             hrefLabel="IoT modülleri →"
           >
             <div className="flex flex-wrap gap-y-4">

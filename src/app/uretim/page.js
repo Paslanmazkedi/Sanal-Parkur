@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
 import DashboardSection from '@/components/dashboard/DashboardSection';
-import { IOT_LINKS, PRODUCTION_LINKS } from '@/lib/navigation';
+import { PRODUCTION_LINKS, SECTION_HREFS } from '@/lib/navigation';
 import { loadDashboardSnapshot } from '@/lib/dashboardMetrics';
 import { getStageMeta } from '@/lib/stationStages';
 import { supabase } from '../supabase';
@@ -34,14 +34,8 @@ const PRODUCTION_DESCRIPTIONS = {
   '/oee': 'İstasyon verimliliği ve OEE',
   '/station': 'Operatör ekranı ve saha işlemleri',
   '/production-orders': 'Aktif ve bekleyen emirler',
-  '/assets': 'İstasyon tanımları ve WEX eşleştirme',
-  '/logs': 'WEX ve cihaz entegrasyon logları',
-};
-
-const IOT_DESCRIPTIONS = {
-  '/simulator': 'PLC/WEX sinyal testi ve makine gönderimi',
-  '/iot-gateway': 'Canlı operasyon ve sinyal akışı',
-  '/lot-records': 'Lot bazlı üretim kayıtları',
+  '/assets': 'İstasyon tanımları',
+  '/logs': 'Sanal Parkur entegrasyon logları',
 };
 
 export default function ProductionHubPage() {
@@ -67,7 +61,11 @@ export default function ProductionHubPage() {
         <p className="text-xs font-mono uppercase tracking-widest text-emerald-400">Üretim</p>
         <h1 className="mt-1 text-3xl font-black tracking-tight text-white md:text-4xl">Üretim Özeti</h1>
         <p className="mt-2 max-w-2xl text-sm text-slate-400">
-          Emirler, saha operasyonları ve IoT entegrasyonu tek ekranda.
+          Emirler ve saha operasyonları. Workcube W3 entegrasyonu için{' '}
+          <Link href={SECTION_HREFS.iot} className="text-violet-400 hover:underline">
+            IoT Entegrasyon
+          </Link>{' '}
+          menüsüne bakın.
         </p>
       </header>
 
@@ -98,19 +96,6 @@ export default function ProductionHubPage() {
               href={link.href}
               label={link.label}
               description={PRODUCTION_DESCRIPTIONS[link.href] || 'Üretim modülü'}
-            />
-          ))}
-        </div>
-      </DashboardSection>
-
-      <DashboardSection title="IoT Entegrasyon" description="Simülatör, gateway ve lot takibi">
-        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-          {IOT_LINKS.map((link) => (
-            <QuickLinkCard
-              key={link.href}
-              href={link.href}
-              label={link.label}
-              description={IOT_DESCRIPTIONS[link.href] || 'IoT modülü'}
             />
           ))}
         </div>

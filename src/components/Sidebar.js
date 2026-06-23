@@ -6,11 +6,12 @@ import { useEffect, useState } from 'react';
 import { supabase } from '../supabase';
 import BrandLogo from './BrandLogo';
 import {
-  IOT_LINKS,
+  IOT_TOOLS_LINKS,
   PRODUCTION_LINKS,
   IOT_PATHS,
   PRODUCTION_PATHS,
   SECTION_HREFS,
+  W3_LINKS,
   isExactOrNestedPath,
 } from '../lib/navigation';
 
@@ -96,7 +97,9 @@ export default function Sidebar({ user }) {
   };
 
   const TopNavLink = ({ href, children }) => {
-    const isActive = isExactOrNestedPath(pathname, href);
+    const isActive = href === SECTION_HREFS.general
+      ? pathname === '/'
+      : isExactOrNestedPath(pathname, href);
 
     return (
       <Link
@@ -157,24 +160,37 @@ export default function Sidebar({ user }) {
                     {link.label}
                   </NavLink>
                 ))}
+              </div>
+            )}
+          </div>
 
-                <div className="pt-1">
-                  <GroupButton
-                    label="IoT Entegrasyon"
-                    isOpen={iotOpen}
-                    onToggle={() => setIotOpen((open) => !open)}
-                    nested
-                  />
-                  {iotOpen && (
-                    <div className="space-y-1 pl-2">
-                      {IOT_LINKS.map((link) => (
-                        <NavLink key={link.href} href={link.href} nested>
-                          {link.label}
-                        </NavLink>
-                      ))}
-                    </div>
-                  )}
-                </div>
+          <div>
+            <GroupButton
+              label="IoT Entegrasyon"
+              isOpen={iotOpen}
+              onToggle={() => setIotOpen((open) => !open)}
+            />
+            {iotOpen && (
+              <div className="space-y-1 pl-2">
+                <NavLink href={SECTION_HREFS.iot}>IoT Entegrasyon Özeti</NavLink>
+
+                <p className="px-4 pt-2 text-[10px] font-semibold uppercase tracking-wider text-violet-400/80">
+                  Workcube W3
+                </p>
+                {W3_LINKS.map((link) => (
+                  <NavLink key={link.href} href={link.href} nested>
+                    {link.label}
+                  </NavLink>
+                ))}
+
+                <p className="px-4 pt-2 text-[10px] font-semibold uppercase tracking-wider text-slate-500">
+                  IoT Araçları
+                </p>
+                {IOT_TOOLS_LINKS.map((link) => (
+                  <NavLink key={link.href} href={link.href} nested>
+                    {link.label}
+                  </NavLink>
+                ))}
               </div>
             )}
           </div>

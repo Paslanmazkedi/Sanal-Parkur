@@ -1,6 +1,7 @@
 export const SECTION_HREFS = {
   general: '/',
   production: '/uretim',
+  iot: '/iot-entegrasyon',
   quality: '/kalite',
   service: '/servis',
 };
@@ -8,6 +9,7 @@ export const SECTION_HREFS = {
 export const MOBILE_TABS = [
   { key: 'general', href: SECTION_HREFS.general, label: 'Genel' },
   { key: 'production', href: SECTION_HREFS.production, label: 'Üretim' },
+  { key: 'iot', href: SECTION_HREFS.iot, label: 'IoT' },
   { key: 'quality', href: SECTION_HREFS.quality, label: 'Kalite' },
   { key: 'service', href: SECTION_HREFS.service, label: 'Servis' },
 ];
@@ -21,22 +23,37 @@ export const PRODUCTION_LINKS = [
   { href: '/logs', label: 'Entegrasyon Logları' },
 ];
 
-export const IOT_LINKS = [
+export const W3_LINKS = [
+  { href: '/iot-entegrasyon/uretim-emirleri', label: 'W3 Üretim Emirleri' },
+  { href: '/iot-entegrasyon/istasyonlar', label: 'W3 İstasyonlar' },
+  { href: '/iot-entegrasyon/operator-paneli', label: 'W3 Operatör Paneli' },
+  { href: '/iot-entegrasyon/loglar', label: 'W3 Log Kayıtları' },
+];
+
+export const IOT_TOOLS_LINKS = [
   { href: '/simulator', label: 'PLC Simülatörü' },
   { href: '/iot-gateway', label: 'IoT Gateway' },
   { href: '/lot-records', label: 'Lot Kayıtları' },
 ];
 
-export const PRODUCTION_PATHS = [
-  ...PRODUCTION_LINKS.map((item) => item.href),
-  ...IOT_LINKS.map((item) => item.href),
+export const IOT_LINKS = [
+  { href: SECTION_HREFS.iot, label: 'IoT Entegrasyon Özeti' },
+  ...W3_LINKS,
+  ...IOT_TOOLS_LINKS,
 ];
 
-export const IOT_PATHS = IOT_LINKS.map((item) => item.href);
+export const PRODUCTION_PATHS = PRODUCTION_LINKS.map((item) => item.href);
+
+export const IOT_PATHS = [
+  SECTION_HREFS.iot,
+  ...W3_LINKS.map((item) => item.href),
+  ...IOT_TOOLS_LINKS.map((item) => item.href),
+];
 
 export const PAGE_TITLES = {
   '/': 'Genel Özet',
   '/uretim': 'Üretim Özeti',
+  '/iot-entegrasyon': 'IoT Entegrasyon Özeti',
   '/kalite': 'Kalite Özeti',
   '/servis': 'Servis Özeti',
   '/oee': 'OEE Monitör',
@@ -44,6 +61,10 @@ export const PAGE_TITLES = {
   '/production-orders': 'Üretim Emirleri',
   '/assets': 'İstasyon Konfigürasyonu',
   '/logs': 'Entegrasyon Logları',
+  '/iot-entegrasyon/uretim-emirleri': 'W3 Üretim Emirleri',
+  '/iot-entegrasyon/istasyonlar': 'W3 İstasyonlar',
+  '/iot-entegrasyon/operator-paneli': 'W3 Operatör Paneli',
+  '/iot-entegrasyon/loglar': 'W3 Log Kayıtları',
   '/simulator': 'PLC Simülatörü',
   '/iot-gateway': 'IoT Gateway',
   '/lot-records': 'Lot Kayıtları',
@@ -52,7 +73,8 @@ export const PAGE_TITLES = {
 
 export const MORE_MENU_SECTIONS = [
   { title: 'Üretim', links: PRODUCTION_LINKS },
-  { title: 'IoT Entegrasyon', links: IOT_LINKS },
+  { title: 'Workcube W3', links: W3_LINKS },
+  { title: 'IoT Araçları', links: IOT_TOOLS_LINKS },
 ];
 
 export function isExactOrNestedPath(pathname, href) {
@@ -65,11 +87,14 @@ export function isSectionActive(pathname, sectionKey) {
   if (sectionKey === 'production') {
     return PRODUCTION_PATHS.some((href) => isExactOrNestedPath(pathname, href));
   }
+  if (sectionKey === 'iot') {
+    return IOT_PATHS.some((href) => isExactOrNestedPath(pathname, href));
+  }
   if (sectionKey === 'quality') {
-    return pathname === '/kalite' || pathname.startsWith('/kalite/');
+    return pathname === SECTION_HREFS.quality || pathname.startsWith('/kalite/');
   }
   if (sectionKey === 'service') {
-    return pathname === '/servis' || pathname.startsWith('/servis/');
+    return pathname === SECTION_HREFS.service || pathname.startsWith('/servis/');
   }
   return false;
 }

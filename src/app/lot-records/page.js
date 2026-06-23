@@ -1,6 +1,7 @@
 'use client';
 
 import Link from 'next/link';
+import { SECTION_HREFS } from '@/lib/navigation';
 import { useEffect, useState } from 'react';
 import { getStageMeta } from '@/lib/stationStages';
 import { supabase } from '../supabase';
@@ -138,6 +139,10 @@ export default function LotRecordsPage() {
           </tbody>
         </table>
       </div>
+
+      <Link href={SECTION_HREFS.iot} className="inline-flex text-sm text-emerald-400 hover:underline">
+        ← IoT Entegrasyon özetine dön
+      </Link>
     </div>
   );
 }
