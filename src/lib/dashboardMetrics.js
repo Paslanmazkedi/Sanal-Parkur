@@ -159,6 +159,11 @@ export async function loadDashboardSnapshot(supabase) {
     recentOperations: operations,
     recentOrders,
     pausedOrders,
+    liveStages: orders.map((o) => ({
+      id: Number(o.p_order_id),
+      no: o.p_order_no || '',
+      stage: Number(o.is_stage),
+    })),
     maintenanceItems,
     recentScrap,
     errors: [

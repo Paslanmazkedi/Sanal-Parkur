@@ -1,20 +1,13 @@
 'use client';
 
-const STAGE_CLASS = {
-  4: 'border-sky-500/30 bg-sky-500/10 text-sky-300',
-  0: 'border-amber-500/30 bg-amber-500/10 text-amber-300',
-  1: 'border-emerald-500/30 bg-emerald-500/10 text-emerald-300',
-  3: 'border-rose-500/30 bg-rose-500/10 text-rose-300',
-  2: 'border-slate-500/30 bg-slate-500/10 text-slate-300',
-};
+import { getStageMeta } from '@/lib/stationStages';
 
 export function W3StageBadge({ stage, label }) {
-  const stageNumber = Number(stage);
-  const className = STAGE_CLASS[stageNumber] || STAGE_CLASS[4];
+  const meta = getStageMeta(stage);
 
   return (
-    <span className={`inline-flex rounded border px-2 py-0.5 text-[10px] font-semibold ${className}`}>
-      {label || `Stage ${stageNumber}`}
+    <span className={`inline-flex rounded border px-2 py-0.5 text-[10px] font-semibold ${meta.className}`}>
+      {label || meta.label}
     </span>
   );
 }

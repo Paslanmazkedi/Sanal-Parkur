@@ -483,7 +483,7 @@ export default function W3ProductionOrdersPage() {
                       )}
                     </td>
                     <td className="px-4 py-3">
-                      <W3StageBadge stage={row.PRODUCTION_STAGE} label={row.PRODUCTION_STAGE_STATUS} />
+                      <W3StageBadge stage={row.PRODUCTION_STAGE} />
                     </td>
                   </tr>
                 );

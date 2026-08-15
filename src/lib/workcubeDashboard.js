@@ -35,6 +35,65 @@ function countByStage(orders, stage) {
   return orders.filter((order) => Number(order.PRODUCTION_STAGE) === stage).length;
 }
 
+function emptyStageCounts() {
+  return { 4: 0, 0: 0, 1: 0, 3: 0, 2: 0 };
+}
+
+function bumpStage(counts, stage) {
+  const key = Number(stage);
+  if (counts[key] != null) counts[key] += 1;
+}
+
+function orderKeys(id, no) {
+  const keys = [];
+  if (Number.isFinite(id)) keys.push(`id:${id}`);
+  const code = String(no || '').trim();
+  if (code) keys.push(`no:${code}`);
+  return keys;
+}
+
+/** Workcube kataloğu + saha is_stage (duraklatma vb. WEX'e yazılmaz). */
+export function buildStageBreakdown(w3Orders = [], liveStages = []) {
+  const byId = new Map();
+  const byNo = new Map();
+  for (const row of liveStages) {
+    const stage = Number(row.stage);
+    if (!Number.isFinite(stage)) continue;
+    if (Number.isFinite(row.id)) byId.set(Number(row.id), stage);
+    const code = String(row.no || '').trim();
+    if (code) byNo.set(code, stage);
+  }
+
+  const counts = emptyStageCounts();
+  const seen = new Set();
+
+  for (const order of w3Orders) {
+    const id = Number(order.P_ORDER_ID);
+    const no = String(order.P_ORDER_NO || '').trim();
+    for (const key of orderKeys(id, no)) seen.add(key);
+    const live = (Number.isFinite(id) && byId.has(id) ? byId.get(id) : null)
+      ?? (no && byNo.has(no) ? byNo.get(no) : null);
+    bumpStage(counts, live ?? order.PRODUCTION_STAGE);
+  }
+
+  for (const row of liveStages) {
+    if (Number(row.stage) !== 3) continue;
+    const keys = orderKeys(Number(row.id), row.no);
+    if (keys.some((key) => seen.has(key))) continue;
+    bumpStage(counts, 3);
+  }
+
+  return STAGE_CHART_ORDER.map((stage) => ({
+    stage,
+    label: STAGE_META[stage].label,
+    chartLabel: STAGE_META[stage].chartLabel,
+    tone: STAGE_META[stage].tone,
+    barClass: STAGE_META[stage].barClass,
+    fill: STAGE_META[stage].fill,
+    count: counts[stage] ?? 0,
+  }));
+}
+
 function computeHealthScore(isActive, stationOrders) {
   if (!isActive) return 35;
   const paused = stationOrders.filter((order) => Number(order.PRODUCTION_STAGE) === 3).length;
@@ -105,13 +164,7 @@ export function summarizeWorkcubeProduction(orders, stations) {
     .filter((order) => Number(order.PRODUCTION_STAGE) === 2)
     .reduce((sum, order) => sum + (Number(order.QUANTITY) || 0), 0);
 
-  const stageBreakdown = STAGE_CHART_ORDER.map((stage) => ({
-    stage,
-    label: STAGE_META[stage].label,
-    tone: STAGE_META[stage].tone,
-    barClass: STAGE_META[stage].barClass,
-    count: countByStage(orders, stage),
-  }));
+  const stageBreakdown = buildStageBreakdown(orders);
 
   return {
     totalOrders: orders.length,

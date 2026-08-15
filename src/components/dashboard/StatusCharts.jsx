@@ -48,11 +48,13 @@ export function StatusBarChart({ items = [], loading = false }) {
     : STAGE_CHART_ORDER.map((stage) => ({
         stage,
         label: STAGE_META[stage].label,
+        chartLabel: STAGE_META[stage].chartLabel,
         count: 0,
       }))
   ).map((item) => ({
     ...item,
     label: item.label || STAGE_META[item.stage]?.label,
+    chartLabel: item.chartLabel || STAGE_META[item.stage]?.chartLabel || STAGE_META[item.stage]?.label,
     fill: STAGE_META[item.stage]?.fill || '#64748b',
     count: Number(item.count) || 0,
   }));
@@ -63,7 +65,7 @@ export function StatusBarChart({ items = [], loading = false }) {
       <div className="mb-3 flex items-end justify-between gap-3">
         <div>
           <p className="text-[10px] font-semibold uppercase tracking-wider text-slate-500">Emir statüleri</p>
-          <p className="mt-0.5 text-xs text-slate-400">Workcube üretim emirleri</p>
+          <p className="mt-0.5 text-xs text-slate-400">Workcube emirleri · saha statüsü</p>
         </div>
         <p className="font-mono text-xs tabular-nums text-slate-500">
           {loading ? '—' : `${total.toLocaleString('tr-TR')} emir`}
@@ -72,10 +74,10 @@ export function StatusBarChart({ items = [], loading = false }) {
 
       <div className="h-56 w-full min-w-0">
         <ResponsiveContainer width="100%" height="100%">
-          <BarChart data={rows} margin={{ top: 28, right: 8, left: -12, bottom: 4 }}>
+          <BarChart data={rows} margin={{ top: 28, right: 8, left: -12, bottom: 8 }}>
             <CartesianGrid strokeDasharray="3 3" stroke="#1e293b" vertical={false} />
             <XAxis
-              dataKey="label"
+              dataKey="chartLabel"
               interval={0}
               tick={{ fill: '#94a3b8', fontSize: 11 }}
               axisLine={{ stroke: '#334155' }}

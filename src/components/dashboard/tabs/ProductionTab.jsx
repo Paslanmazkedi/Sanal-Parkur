@@ -5,6 +5,7 @@ import { KpiCard } from '@/components/dashboard/dashboardUi';
 import { MiniDonut, StatusBarChart } from '@/components/dashboard/StatusCharts';
 import { PRODUCTION_ORDERS_HREF } from '@/lib/navigation';
 import { STAGE_CHART_ORDER, STAGE_META } from '@/lib/stationStages';
+import { buildStageBreakdown } from '@/lib/workcubeDashboard';
 
 function formatCount(value) {
   return Number(value || 0).toLocaleString('tr-TR');
@@ -51,6 +52,7 @@ function localStageBreakdown(local) {
   return STAGE_CHART_ORDER.map((stage) => ({
     stage,
     label: STAGE_META[stage].label,
+    chartLabel: STAGE_META[stage].chartLabel,
     barClass: STAGE_META[stage].barClass,
     count: counts[stage] ?? 0,
   }));
@@ -67,16 +69,21 @@ export default function ProductionTab({
   const w3 = workcube?.production;
   const local = snapshot?.production;
 
-  const total = w3?.totalOrders ?? local?.totalOrders ?? 0;
-  const completed = w3?.completed ?? local?.completedOrders ?? 0;
-  const running = local?.runningOrders ?? w3?.running ?? 0;
-  const queue = w3?.queue ?? local?.queueOrders ?? 0;
-  const control = w3?.control ?? local?.controlOrders ?? 0;
-  const paused = local?.faultOrders ?? w3?.paused ?? 0;
+  const stageBreakdown = (workcube?.orders?.length || snapshot?.liveStages?.length)
+    ? buildStageBreakdown(workcube?.orders || [], snapshot?.liveStages || [])
+    : localStageBreakdown(local);
+  const stageCount = (stage) =>
+    Number(stageBreakdown.find((item) => Number(item.stage) === stage)?.count) || 0;
+
+  const total = stageBreakdown.reduce((sum, item) => sum + (Number(item.count) || 0), 0);
+  const completed = stageCount(2);
+  const running = local?.runningOrders ?? stageCount(1);
+  const queue = stageCount(4);
+  const control = stageCount(0);
+  const paused = local?.faultOrders ?? stageCount(3);
   const runningStations = local?.runningStations ?? 0;
   const stationCount = local?.stationCount ?? w3?.totalStations ?? 0;
   const completionRate = total > 0 ? Math.round((completed / total) * 100) : 0;
-  const stageBreakdown = w3?.stageBreakdown?.length ? w3.stageBreakdown : localStageBreakdown(local);
 
   return (
     <div className="space-y-5">
@@ -98,7 +105,7 @@ export default function ProductionTab({
             loading={loading}
           />
           <KpiCard
-            label="Üretimde"
+            label="Başladı"
             value={formatCount(running)}
             hint="Çalışan üretim emri"
             tone="text-emerald-300"
@@ -114,7 +121,7 @@ export default function ProductionTab({
             loading={orderLoading}
           />
           <div className="rounded-xl border border-slate-800 bg-slate-900/60 px-4 py-4">
-            <p className="text-[10px] font-semibold uppercase tracking-wider text-amber-400">Arıza / Duruş</p>
+            <p className="text-[10px] font-semibold uppercase tracking-wider text-amber-400">Arıza / Duraklama</p>
             <div className="mt-2 flex items-center justify-between gap-2">
               <div className="flex min-w-0 items-center gap-2">
                 {!loading && paused > 0 ? <YellowSiren /> : null}
@@ -149,32 +156,32 @@ export default function ProductionTab({
                 {orderLoading && !w3 ? '—' : formatCount(total)}
               </p>
             </div>
-            <p className="mt-2 text-[11px] leading-relaxed text-slate-500">Workcube kayıtları</p>
+            <p className="mt-2 text-[11px] leading-relaxed text-slate-500">Grafikteki emirler</p>
           </div>
           <div className="rounded-xl border border-slate-800 bg-slate-900/60 px-4 py-4">
-            <p className="text-[10px] font-semibold uppercase tracking-wider text-slate-500">Tamamlanan</p>
+            <p className="text-[10px] font-semibold uppercase tracking-wider text-slate-500">Bitti</p>
             <div className="mt-2 flex items-center gap-3">
-              <MiniDonut value={completed} total={total} color="#34d399" />
-              <p className={`text-2xl font-black tabular-nums leading-none sm:text-3xl ${orderLoading && !w3 ? 'text-slate-600' : 'text-emerald-300'}`}>
+              <MiniDonut value={completed} total={total} color="#ef4444" />
+              <p className={`text-2xl font-black tabular-nums leading-none sm:text-3xl ${orderLoading && !w3 ? 'text-slate-600' : 'text-rose-400'}`}>
                 {orderLoading && !w3 ? '—' : formatCount(completed)}
               </p>
             </div>
             <p className="mt-2 text-[11px] leading-relaxed text-slate-500">
-              Sonuç girilmiş · %{completionRate}
+              Bitti · %{completionRate}
             </p>
           </div>
           <KpiCard
-            label="Kuyruk"
+            label="Başlamadı"
             value={formatCount(queue)}
-            hint="Başlamayı bekleyen"
+            hint="Kuyrukta bekleyen"
             tone="text-sky-300"
             href={PRODUCTION_ORDERS_HREF}
             loading={orderLoading && !w3}
           />
           <KpiCard
-            label="Operatörde"
+            label="Operatöre Gönderildi"
             value={formatCount(control)}
-            hint="Kontrol / hazırlık"
+            hint="Hazırlık / kontrol"
             tone="text-amber-300"
             href="/station"
             loading={orderLoading && !w3}
