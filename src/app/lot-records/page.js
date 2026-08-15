@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { SECTION_HREFS } from '@/lib/navigation';
+import { PRODUCTION_ORDERS_HREF } from '@/lib/navigation';
 import { useEffect, useState } from 'react';
 import { getStageMeta } from '@/lib/stationStages';
 import { supabase } from '../supabase';
@@ -59,7 +59,7 @@ export default function LotRecordsPage() {
   });
 
   return (
-    <div className="mx-auto w-full min-w-0 max-w-6xl space-y-6">
+    <div className="w-full min-w-0 max-w-full space-y-6">
       <header className="space-y-3">
         <div>
           <p className="text-xs font-mono uppercase tracking-widest text-violet-400">IoT Entegrasyon</p>
@@ -78,7 +78,7 @@ export default function LotRecordsPage() {
         />
       </header>
 
-      <div className="w-full min-w-0 overflow-x-auto rounded-xl border border-slate-800 bg-slate-900/50">
+      <div className="w-full min-w-0 max-w-full overflow-x-auto rounded-xl border border-slate-800 bg-slate-900/50">
         <table className="min-w-[48rem] w-full text-sm">
           <thead className="bg-slate-950/80 text-left text-[11px] uppercase tracking-wider text-slate-500">
             <tr>
@@ -113,7 +113,7 @@ export default function LotRecordsPage() {
                     <td className="px-4 py-3 font-mono font-semibold text-emerald-300">{record.lot_no}</td>
                     <td className="px-4 py-3">
                       <Link
-                        href="/production-orders"
+                        href={PRODUCTION_ORDERS_HREF}
                         className="font-mono text-slate-200 hover:text-emerald-300"
                       >
                         {record.p_order_no}
@@ -140,8 +140,8 @@ export default function LotRecordsPage() {
         </table>
       </div>
 
-      <Link href={SECTION_HREFS.iot} className="inline-flex text-sm text-emerald-400 hover:underline">
-        ← IoT Entegrasyon özetine dön
+      <Link href={PRODUCTION_ORDERS_HREF} className="inline-flex text-sm text-emerald-400 hover:underline">
+        ← Üretim emirlerine dön
       </Link>
     </div>
   );

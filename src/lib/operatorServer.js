@@ -42,6 +42,26 @@ export async function applyStageAction({ action, pOrderId, stationId, actorUserI
     throw new Error(`${config.label} aksiyonu mevcut durum (${currentStage}) icin uygun degil.`);
   }
 
+  if (action === 'start') {
+    const { data: runningRows, error: runningError } = await supabase
+      .schema('production')
+      .from('production_orders')
+      .select('p_order_id,p_order_no')
+      .eq('station_id', stationId)
+      .eq('is_stage', 1)
+      .neq('p_order_id', pOrderId)
+      .limit(1);
+
+    if (runningError) throw new Error(runningError.message);
+
+    const blocking = runningRows?.[0];
+    if (blocking) {
+      throw new Error(
+        `Bu istasyonda ${blocking.p_order_no || `#${blocking.p_order_id}`} zaten üretimde. Önce duraklatın veya sonuç girin.`,
+      );
+    }
+  }
+
   const updatePayload = {
     is_stage: config.toStage,
     prod_order_stage: config.toStage,

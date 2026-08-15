@@ -1,71 +1,79 @@
 'use client';
 
+import Link from 'next/link';
 import { Suspense, useCallback, useEffect, useMemo, useState } from 'react';
-import { useSearchParams } from 'next/navigation';
-import StationCommandPanel from '@/components/operator/StationCommandPanel';
-import StationSelectorBar from '@/components/operator/StationSelectorBar';
+import { useRouter, useSearchParams } from 'next/navigation';
+import BrandLogo from '@/components/BrandLogo';
+import StationOrderBoard from '@/components/operator/StationOrderBoard';
+import StationRunConsole from '@/components/operator/StationRunConsole';
 import TimeEntryModal from '@/components/operator/TimeEntryModal';
 import FinishOrderModal from '@/components/operator/FinishOrderModal';
-import { calculateOee, pickActiveOrder } from '@/lib/oee';
-import { getStageMeta } from '@/lib/stationStages';
-import { STATION_STORAGE_KEY } from '@/lib/operatorConstants';
+import { pickActiveOrder } from '@/lib/oee';
 import { postOperatorAction } from '@/lib/operatorApi';
+import { useOperatorKiosk } from '@/hooks/useOperatorKiosk';
 import { supabase } from '../supabase';
 
 const POLL_MS = 8000;
+const ORDER_SELECT =
+  'p_order_id,p_order_no,product_name2,lot_no,quantity,counter_value,station_id,is_stage,start_date';
 
 function formatClock(date) {
   return date.toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
 }
 
-function OrderPickRow({ order, selected, onSelect }) {
-  const stage = getStageMeta(order.is_stage);
-  return (
-    <button
-      type="button"
-      onClick={() => onSelect(order)}
-      className={`flex w-full items-center justify-between rounded-lg border px-3 py-2.5 text-left transition-colors ${
-        selected
-          ? 'border-emerald-500/50 bg-emerald-500/10'
-          : 'border-slate-800 bg-slate-950/40 hover:border-slate-600'
-      }`}
-    >
-      <div className="min-w-0">
-        <p className="truncate font-mono text-sm font-semibold text-white">{order.p_order_no}</p>
-        <p className="truncate text-xs text-slate-400">{order.product_name2}</p>
-      </div>
-      <div className="ml-3 shrink-0 text-right">
-        <span className={`inline-flex rounded border px-1.5 py-0.5 text-[10px] font-semibold ${stage.className}`}>
-          {stage.label}
-        </span>
-        <p className="mt-1 font-mono text-[10px] text-slate-500">
-          {order.counter_value ?? 0}/{order.quantity ?? 0}
-        </p>
-      </div>
-    </button>
-  );
+async function fetchOpenOrders(extra = {}) {
+  let query = supabase
+    .from('production_orders')
+    .select(ORDER_SELECT)
+    .in('is_stage', [0, 1, 3, 4])
+    .order('p_order_id', { ascending: true });
+
+  if (extra.stationId) {
+    query = query.eq('station_id', Number(extra.stationId));
+  }
+
+  const first = await query;
+  if (!first.error) return first;
+
+  if (String(first.error.message || '').includes('start_date')) {
+    let fallback = supabase
+      .from('production_orders')
+      .select('p_order_id,p_order_no,product_name2,lot_no,quantity,counter_value,station_id,is_stage')
+      .in('is_stage', [0, 1, 3, 4])
+      .order('p_order_id', { ascending: true });
+    if (extra.stationId) fallback = fallback.eq('station_id', Number(extra.stationId));
+    return fallback;
+  }
+
+  return first;
 }
 
 function StationOperatorContent() {
+  const router = useRouter();
   const searchParams = useSearchParams();
+  const kiosk = useOperatorKiosk();
   const [workstations, setWorkstations] = useState([]);
   const [operators, setOperators] = useState([]);
   const [stationId, setStationId] = useState('');
+  const [runOrderId, setRunOrderId] = useState(null);
   const [orders, setOrders] = useState([]);
+  const [listOrders, setListOrders] = useState([]);
   const [selectedOrderId, setSelectedOrderId] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [listLoading, setListLoading] = useState(true);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
   const [successMsg, setSuccessMsg] = useState('');
   const [now, setNow] = useState(() => new Date());
   const [timeModalOpen, setTimeModalOpen] = useState(false);
   const [finishModalOpen, setFinishModalOpen] = useState(false);
-  const [recentTimeEntries, setRecentTimeEntries] = useState([]);
 
   useEffect(() => {
     const urlStation = searchParams.get('station') || searchParams.get('station_id') || '';
-    const storedStation = typeof window !== 'undefined' ? window.localStorage.getItem(STATION_STORAGE_KEY) : '';
-    setStationId(urlStation || storedStation || '');
+    const urlOrder = searchParams.get('order') || '';
+    setStationId(urlStation);
+    setRunOrderId(urlOrder || null);
+    if (urlOrder) setSelectedOrderId(Number(urlOrder) || urlOrder);
   }, [searchParams]);
 
   useEffect(() => {
@@ -77,7 +85,7 @@ function StationOperatorContent() {
           .order('station_id', { ascending: true }),
         supabase
           .from('operators')
-          .select('id,operator_code,full_name')
+          .select('id,operator_code,full_name,default_station_id')
           .eq('is_active', true)
           .order('full_name', { ascending: true }),
       ]);
@@ -91,23 +99,27 @@ function StationOperatorContent() {
     loadMeta();
   }, []);
 
+  const loadListOrders = useCallback(async ({ initial = false } = {}) => {
+    if (initial) setListLoading(true);
+    const { data, error: ordersError } = await fetchOpenOrders();
+
+    if (ordersError) {
+      setError(ordersError.message);
+    } else {
+      setListOrders(data || []);
+      setError('');
+    }
+    if (initial) setListLoading(false);
+  }, []);
+
   const loadStationOrders = useCallback(async () => {
     if (!stationId) {
       setLoading(false);
       setOrders([]);
-      setRecentTimeEntries([]);
       return;
     }
 
-    window.localStorage.setItem(STATION_STORAGE_KEY, stationId);
-
-    const numericStationId = Number(stationId);
-    const { data, error: ordersError } = await supabase
-      .from('production_orders')
-      .select('p_order_id,p_order_no,product_name2,lot_no,quantity,counter_value,station_id,is_stage')
-      .eq('station_id', numericStationId)
-      .in('is_stage', [0, 1, 3, 4])
-      .order('p_order_id', { ascending: true });
+    const { data, error: ordersError } = await fetchOpenOrders({ stationId });
 
     if (ordersError) {
       setError(ordersError.message);
@@ -116,38 +128,54 @@ function StationOperatorContent() {
       setError('');
     }
 
-    const { data: timeData, error: timeError } = await supabase
-      .from('order_time_entries')
-      .select('id,entry_date,notes,created_at,p_order_id,order_time_entry_lines(operator_name,minutes_spent)')
-      .eq('station_id', numericStationId)
-      .order('created_at', { ascending: false })
-      .limit(8);
-
-    if (!timeError && timeData) setRecentTimeEntries(timeData);
-
     setLoading(false);
   }, [stationId]);
 
+  const showConsole = Boolean(stationId && runOrderId);
+
   useEffect(() => {
+    if (showConsole) return undefined;
+
+    loadListOrders({ initial: true });
+    const poll = setInterval(() => loadListOrders(), POLL_MS);
+    return () => clearInterval(poll);
+  }, [showConsole, loadListOrders]);
+
+  useEffect(() => {
+    if (!showConsole) return undefined;
+
     setLoading(true);
     loadStationOrders();
     const poll = setInterval(loadStationOrders, POLL_MS);
     return () => clearInterval(poll);
-  }, [loadStationOrders]);
+  }, [showConsole, loadStationOrders]);
 
   useEffect(() => {
     const timer = setInterval(() => setNow(new Date()), 1000);
     return () => clearInterval(timer);
   }, []);
 
+  const activeWorkstations = useMemo(
+    () => workstations.filter((ws) => ws.active !== 0),
+    [workstations],
+  );
+
+  const filteredListOrders = useMemo(() => {
+    if (!stationId) return listOrders;
+    return listOrders.filter((order) => String(order.station_id) === String(stationId));
+  }, [listOrders, stationId]);
+
   const workstation = workstations.find((ws) => String(ws.station_id) === String(stationId));
   const activeOrders = useMemo(() => orders.filter((o) => [0, 1, 3].includes(Number(o.is_stage))), [orders]);
   const queueOrders = useMemo(() => orders.filter((o) => Number(o.is_stage) === 4), [orders]);
-  const runningCount = useMemo(() => orders.filter((o) => Number(o.is_stage) === 1).length, [orders]);
+  const blockingOrder = useMemo(
+    () => orders.find((o) => Number(o.is_stage) === 1) || null,
+    [orders],
+  );
 
   const selectedOrder = useMemo(() => {
     if (selectedOrderId) {
-      return orders.find((o) => o.p_order_id === selectedOrderId) || null;
+      return orders.find((o) => String(o.p_order_id) === String(selectedOrderId)) || null;
     }
     return pickActiveOrder(orders);
   }, [orders, selectedOrderId]);
@@ -158,29 +186,44 @@ function StationOperatorContent() {
     }
   }, [selectedOrder, selectedOrderId]);
 
-  const activeWorkers = useMemo(() => {
-    const names = new Set();
-    const today = new Date().toISOString().slice(0, 10);
+  const replaceStationUrl = (nextStationId, nextOrderId) => {
+    const params = new URLSearchParams(searchParams.toString());
+    params.delete('station_id');
+    if (nextStationId) params.set('station', String(nextStationId));
+    else params.delete('station');
+    if (nextOrderId) params.set('order', String(nextOrderId));
+    else params.delete('order');
+    const query = params.toString();
+    router.replace(query ? `/station?${query}` : '/station');
+  };
 
-    const relevantEntries = selectedOrder
-      ? recentTimeEntries.filter((e) => e.p_order_id === selectedOrder.p_order_id)
-      : recentTimeEntries.filter((e) => e.entry_date === today);
-
-    relevantEntries.forEach((entry) => {
-      (entry.order_time_entry_lines || []).forEach((line) => {
-        if (line.operator_name) names.add(line.operator_name);
-      });
-    });
-
-    return [...names];
-  }, [recentTimeEntries, selectedOrder]);
-
-  const metrics = calculateOee({ activeOrder: selectedOrder });
-
-  const handleStationChange = (nextStationId) => {
+  const handleFilterStation = (nextStationId) => {
     setStationId(nextStationId);
+    setRunOrderId(null);
     setSelectedOrderId(null);
+    setSuccessMsg('');
+    setError('');
+    replaceStationUrl(nextStationId, null);
+  };
+
+  const handleEnterOrder = (order) => {
+    const nextStationId = String(order.station_id);
+    setStationId(nextStationId);
+    setRunOrderId(String(order.p_order_id));
+    setSelectedOrderId(order.p_order_id);
+    setSuccessMsg('');
+    setError('');
     setLoading(true);
+    replaceStationUrl(nextStationId, order.p_order_id);
+  };
+
+  const handleBackToList = () => {
+    setRunOrderId(null);
+    setSelectedOrderId(null);
+    setOrders([]);
+    setSuccessMsg('');
+    setError('');
+    replaceStationUrl(stationId, null);
   };
 
   const handleAction = async (action) => {
@@ -217,122 +260,80 @@ function StationOperatorContent() {
   };
 
   return (
-    <div className="mx-auto max-w-7xl space-y-6">
-      <header>
-        <p className="font-mono text-xs uppercase tracking-[0.2em] text-emerald-400">Operatör Paneli</p>
-        <h1 className="mt-1 text-3xl font-black tracking-tight text-white">Saha İşlemleri</h1>
-        <p className="mt-1 text-sm text-slate-400">
-          İstasyon seçin, emri belirleyin ve kontrol / başlat / bitir işlemlerini uygulayın.
-        </p>
-      </header>
+    <div className="flex h-full min-h-0 w-full min-w-0 flex-col">
+      {kiosk && (
+        <header className="mb-3 flex shrink-0 items-center justify-between gap-3 border-b border-slate-800 pb-3">
+          <BrandLogo size="sm" showTagline={false} asLink={false} />
+          <Link
+            href="/station?kiosk=0"
+            className="rounded-lg border border-slate-700 px-3 py-2 text-[11px] font-semibold text-slate-400 transition-colors hover:border-slate-500 hover:text-slate-200"
+          >
+            Tam panel
+          </Link>
+        </header>
+      )}
+
+      <div className="mb-2 flex shrink-0 items-end gap-3">
+        <label className="min-w-0 flex-1">
+          <span className="mb-1 block text-[10px] font-semibold uppercase tracking-wider text-slate-500">
+            İstasyon
+          </span>
+          <select
+            value={stationId}
+            onChange={(event) => handleFilterStation(event.target.value)}
+            className="h-11 w-full rounded-xl border border-slate-800 bg-slate-950 px-3 text-sm text-white outline-none transition focus:border-emerald-500"
+          >
+            <option value="">Tüm istasyonlar</option>
+            {activeWorkstations.map((ws) => (
+              <option key={ws.station_id} value={String(ws.station_id)}>
+                #{ws.station_id} · {ws.station_name}
+              </option>
+            ))}
+          </select>
+        </label>
+      </div>
 
       {error && (
-        <div className="rounded-xl border border-rose-500/30 bg-rose-950/30 px-4 py-3 text-sm text-rose-200">
+        <div className="mb-2 shrink-0 rounded-lg border border-rose-500/30 bg-rose-950/30 px-3 py-2 text-xs text-rose-200">
           {error}
         </div>
       )}
       {successMsg && (
-        <div className="rounded-xl border border-emerald-500/30 bg-emerald-950/30 px-4 py-3 text-sm text-emerald-200">
+        <div className="mb-2 shrink-0 rounded-lg border border-emerald-500/30 bg-emerald-950/30 px-3 py-2 text-xs text-emerald-200">
           {successMsg}
         </div>
       )}
 
-      <StationSelectorBar
-        workstations={workstations}
-        stationId={stationId}
-        onStationChange={handleStationChange}
-      />
-
-      {stationId && (
-        <StationCommandPanel
-          stationId={stationId}
-          workstation={workstation}
-          activeWorkers={activeWorkers}
-          activeOrderCount={runningCount}
-          metrics={metrics}
-          selectedOrder={selectedOrder}
-          loading={loading}
-          busy={busy}
-          clock={formatClock(now)}
-          onAction={handleAction}
-          onOpenTimeEntry={() => setTimeModalOpen(true)}
-        />
-      )}
-
-      {stationId && (
-        <div className="grid gap-6 lg:grid-cols-2">
-          <section className="rounded-2xl border border-slate-800 bg-slate-900/40 p-4">
-            <h3 className="mb-3 font-mono text-xs font-bold uppercase tracking-wider text-slate-400">
-              Aktif / Duraklatılmış ({activeOrders.length})
-            </h3>
-            <div className="space-y-2">
-              {activeOrders.length === 0 ? (
-                <p className="py-6 text-center text-sm text-slate-500">Kayıt yok.</p>
-              ) : (
-                activeOrders.map((order) => (
-                  <OrderPickRow
-                    key={order.p_order_id}
-                    order={order}
-                    selected={selectedOrder?.p_order_id === order.p_order_id}
-                    onSelect={(o) => setSelectedOrderId(o.p_order_id)}
-                  />
-                ))
-              )}
-            </div>
-          </section>
-
-          <section className="rounded-2xl border border-slate-800 bg-slate-900/40 p-4">
-            <h3 className="mb-3 font-mono text-xs font-bold uppercase tracking-wider text-slate-400">
-              Kuyruk ({queueOrders.length})
-            </h3>
-            <div className="space-y-2">
-              {queueOrders.length === 0 ? (
-                <p className="py-6 text-center text-sm text-slate-500">Bekleyen emir yok.</p>
-              ) : (
-                queueOrders.map((order) => (
-                  <OrderPickRow
-                    key={order.p_order_id}
-                    order={order}
-                    selected={selectedOrder?.p_order_id === order.p_order_id}
-                    onSelect={(o) => setSelectedOrderId(o.p_order_id)}
-                  />
-                ))
-              )}
-            </div>
-          </section>
-        </div>
-      )}
-
-      {stationId && (
-        <section className="rounded-2xl border border-slate-800 bg-slate-900/40 p-5">
-          <h3 className="mb-4 font-mono text-xs font-bold uppercase tracking-wider text-slate-400">
-            Son Zaman Girişleri
-          </h3>
-          {recentTimeEntries.length === 0 ? (
-            <p className="text-sm text-slate-500">Henüz zaman kaydı yok.</p>
-          ) : (
-            <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-              {recentTimeEntries.map((entry) => (
-                <div key={entry.id} className="rounded-xl border border-slate-800 bg-slate-950/50 p-3 text-sm">
-                  <div className="flex items-center justify-between gap-2">
-                    <p className="font-mono text-xs text-slate-400">{entry.entry_date}</p>
-                    {entry.p_order_id && (
-                      <span className="text-[10px] text-slate-500">Emir #{entry.p_order_id}</span>
-                    )}
-                  </div>
-                  <ul className="mt-2 space-y-1 text-slate-300">
-                    {(entry.order_time_entry_lines || []).map((line, idx) => (
-                      <li key={idx} className="text-xs">
-                        {line.operator_name}: <span className="text-emerald-400">{line.minutes_spent} dk</span>
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              ))}
-            </div>
-          )}
-        </section>
-      )}
+      <div className="min-h-0 flex-1 overflow-hidden">
+        {showConsole ? (
+          <StationRunConsole
+            stationId={stationId}
+            workstation={workstation}
+            selectedOrder={selectedOrder}
+            loading={loading}
+            busy={busy}
+            clock={formatClock(now)}
+            onBack={handleBackToList}
+            onAction={handleAction}
+            onOpenTimeEntry={() => setTimeModalOpen(true)}
+            blockingOrder={
+              blockingOrder && selectedOrder && blockingOrder.p_order_id !== selectedOrder.p_order_id
+                ? blockingOrder
+                : null
+            }
+            activeOrders={activeOrders}
+            queueOrders={queueOrders}
+            onSelectOrder={setSelectedOrderId}
+          />
+        ) : (
+          <StationOrderBoard
+            orders={filteredListOrders}
+            workstations={workstations}
+            loading={listLoading}
+            onEnter={handleEnterOrder}
+          />
+        )}
+      </div>
 
       <TimeEntryModal
         open={timeModalOpen}
@@ -348,7 +349,7 @@ function StationOperatorContent() {
         onClose={() => setFinishModalOpen(false)}
         order={selectedOrder}
         stationId={Number(stationId)}
-        onSuccess={() => handleMutationSuccess('Emir bitirildi ve basketler kaydedildi.')}
+        onSuccess={() => handleMutationSuccess('Sonuç kaydedildi.')}
       />
     </div>
   );
@@ -356,7 +357,11 @@ function StationOperatorContent() {
 
 export default function StationOperatorPage() {
   return (
-    <Suspense fallback={<div className="py-20 text-center text-slate-500">Operatör paneli yükleniyor...</div>}>
+    <Suspense
+      fallback={
+        <div className="flex h-full min-h-0 items-center justify-center text-slate-500">Operatör paneli yükleniyor...</div>
+      }
+    >
       <StationOperatorContent />
     </Suspense>
   );

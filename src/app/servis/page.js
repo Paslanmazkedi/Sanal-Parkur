@@ -25,7 +25,7 @@ export default function ServiceHubPage() {
   const service = snapshot?.service;
 
   return (
-    <div className="mx-auto w-full min-w-0 max-w-6xl space-y-8">
+    <div className="w-full min-w-0 max-w-full space-y-8">
       <header>
         <p className="text-xs font-mono uppercase tracking-widest text-sky-400">Servis</p>
         <h1 className="mt-1 text-3xl font-black tracking-tight text-white md:text-4xl">Servis Özeti</h1>
@@ -58,10 +58,10 @@ export default function ServiceHubPage() {
       <DashboardSection title="Servis İşlemleri" description="İstasyon ve cihaz yönetimi">
         <div className="grid gap-3 sm:grid-cols-2">
           <Link
-            href="/assets"
+            href="/iot-entegrasyon/istasyonlar"
             className="rounded-xl border border-slate-800 bg-slate-900/50 px-4 py-4 transition-colors hover:border-sky-500/30"
           >
-            <p className="text-sm font-semibold text-white">İstasyon Konfigürasyonu</p>
+            <p className="text-sm font-semibold text-white">İstasyonlar</p>
             <p className="mt-1 text-xs text-slate-500">İstasyon tanımları ve parametreler</p>
           </Link>
           <Link

@@ -62,9 +62,11 @@ export async function fetchWexWorkstations(companyIdInput) {
   };
 }
 
-export async function fetchWexProductionOrders(companyIdInput) {
+export async function fetchWexProductionOrders(companyIdInput, options = {}) {
   const companyId = parseCompanyId(companyIdInput, getDefaultCompanyId());
-  const { startDate, finishDate } = getOrdersDateRange();
+  const defaults = getOrdersDateRange();
+  const startDate = options.startDate || defaults.startDate;
+  const finishDate = options.finishDate || defaults.finishDate;
   const periodYear = getPeriodYear();
   const baseUrl = getWexSpInfoBaseUrl();
   const query = buildQuery({

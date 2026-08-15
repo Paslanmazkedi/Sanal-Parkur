@@ -44,3 +44,34 @@ input {
   color: #ffffff !important;
   border-color: #334155 !important;
 }
+
+/* Koyu temada tarih seçici takvim ikonu */
+input[type='date']::-webkit-calendar-picker-indicator {
+  cursor: pointer;
+  opacity: 1;
+  filter: invert(1) brightness(1.15);
+}
+
+@keyframes siren-rotor {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.siren-wrap {
+  display: inline-flex;
+  height: 2.75rem;
+  width: 2.5rem;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+}
+
+.siren-rotor {
+  animation: siren-rotor 2.8s linear infinite;
+  transform-box: fill-box;
+  transform-origin: center;
+}

@@ -25,7 +25,7 @@ export default function QualityHubPage() {
   const quality = snapshot?.quality;
 
   return (
-    <div className="mx-auto w-full min-w-0 max-w-6xl space-y-8">
+    <div className="w-full min-w-0 max-w-full space-y-8">
       <header>
         <p className="text-xs font-mono uppercase tracking-widest text-rose-400">Kalite</p>
         <h1 className="mt-1 text-3xl font-black tracking-tight text-white md:text-4xl">Kalite Özeti</h1>

@@ -379,7 +379,7 @@ export default function SimulatorPage() {
   };
 
   return (
-    <div className="max-w-5xl mx-auto space-y-6">
+    <div className="w-full min-w-0 max-w-full space-y-6">
       <div className="flex flex-wrap gap-2">
         <button
           className={`px-4 py-2 rounded-xl font-medium ${activeTab === 1 ? 'bg-emerald-600 text-white' : 'bg-slate-700 text-slate-300'}`}

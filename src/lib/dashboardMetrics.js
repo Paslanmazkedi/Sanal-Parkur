@@ -51,6 +51,8 @@ export async function loadDashboardSnapshot(supabase) {
   const scrapLines = finishLinesRes.error ? [] : finishLinesRes.data || [];
   const timeEntries = timeEntriesRes.error ? [] : timeEntriesRes.data || [];
 
+  const runningOrders = orders.filter((o) => Number(o.is_stage) === 1);
+  const controlOrders = orders.filter((o) => Number(o.is_stage) === 0);
   const activeOrders = orders.filter((o) => [0, 1].includes(Number(o.is_stage)));
   const queueOrders = orders.filter((o) => Number(o.is_stage) === 4);
   const faultOrders = orders.filter((o) => Number(o.is_stage) === 3);
@@ -68,6 +70,11 @@ export async function loadDashboardSnapshot(supabase) {
     : 0;
 
   const runningStations = stationSummaries.filter((s) => Number(s.statusStage) === 1).length;
+  const downtimeStations = new Set(
+    faultOrders.map((order) => Number(order.station_id)).filter((id) => Number.isFinite(id)),
+  ).size;
+  const producedQty = orders.reduce((sum, order) => sum + (Number(order.counter_value) || 0), 0);
+  const targetQty = orders.reduce((sum, order) => sum + (Number(order.quantity) || 0), 0);
   const scrapTotal = scrapLines.reduce((sum, line) => sum + (Number(line.quantity) || 0), 0);
 
   const totalLaborMinutes = timeEntries.reduce((sum, entry) => {
@@ -86,16 +93,47 @@ export async function loadDashboardSnapshot(supabase) {
     .sort((a, b) => Number(b.p_order_id) - Number(a.p_order_id))
     .slice(0, 6);
 
+  const pausedOrders = orders
+    .filter((o) => Number(o.is_stage) === 3)
+    .slice(0, 5)
+    .map((o) => ({
+      id: o.p_order_id,
+      label: o.p_order_no,
+      detail: o.product_name2 || '—',
+      stationId: o.station_id,
+    }));
+
+  const maintenanceItems = machines
+    .filter((m) => m.status === 'maintenance' || m.status === 'offline')
+    .slice(0, 5)
+    .map((m) => ({
+      id: m.id,
+      label: m.machine_name || m.machine_code || `Makine #${m.id}`,
+      status: m.status === 'maintenance' ? 'Bakımda' : 'Offline',
+      stationId: m.station_id,
+    }));
+
+  const recentScrap = scrapLines.slice(0, 5).map((line) => ({
+    id: line.id,
+    quantity: line.quantity,
+    createdAt: line.created_at,
+  }));
+
   return {
     production: {
       totalOrders: orders.length,
+      runningOrders: runningOrders.length,
+      controlOrders: controlOrders.length,
       activeOrders: activeOrders.length,
       queueOrders: queueOrders.length,
       faultOrders: faultOrders.length,
       completedOrders: completedOrders.length,
       avgOee,
       runningStations,
+      downtimeStations,
       stationCount: workstations.filter((ws) => ws.active !== 0).length,
+      producedQty,
+      targetQty,
       laborMinutesToday: totalLaborMinutes,
     },
     quality: {
@@ -120,6 +158,9 @@ export async function loadDashboardSnapshot(supabase) {
     recentLogs: logs.slice(0, 6),
     recentOperations: operations,
     recentOrders,
+    pausedOrders,
+    maintenanceItems,
+    recentScrap,
     errors: [
       ordersRes.error?.message,
       workstationsRes.error?.message,

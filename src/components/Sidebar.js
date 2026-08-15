@@ -6,13 +6,13 @@ import { useEffect, useState } from 'react';
 import { supabase } from '../supabase';
 import BrandLogo from './BrandLogo';
 import {
-  IOT_TOOLS_LINKS,
+  HOME_LABEL,
   PRODUCTION_LINKS,
-  IOT_PATHS,
-  PRODUCTION_PATHS,
+  REPORTS_LINKS,
+  REPORTS_SECTION_LABEL,
   SECTION_HREFS,
-  W3_LINKS,
-  WORKCUBE_SECTION_LABEL,
+  WEX_LAB_LINKS,
+  WEX_LAB_SECTION_LABEL,
   isExactOrNestedPath,
 } from '../lib/navigation';
 
@@ -23,18 +23,11 @@ export default function Sidebar({ user }) {
   const [profileName, setProfileName] = useState('');
   const [currentUser, setCurrentUser] = useState(user ?? null);
 
-  const [productionOpen, setProductionOpen] = useState(
-    PRODUCTION_PATHS.some((href) => isExactOrNestedPath(pathname, href)),
-  );
-  const [iotOpen, setIotOpen] = useState(
-    IOT_PATHS.some((href) => isExactOrNestedPath(pathname, href)),
-  );
-  const [serviceOpen, setServiceOpen] = useState(
-    pathname === SECTION_HREFS.service || pathname.startsWith('/servis/'),
-  );
-  const [qualityOpen, setQualityOpen] = useState(
-    pathname === SECTION_HREFS.quality || pathname.startsWith('/kalite/'),
-  );
+  const [productionOpen, setProductionOpen] = useState(false);
+  const [reportsOpen, setReportsOpen] = useState(false);
+  const [serviceOpen, setServiceOpen] = useState(false);
+  const [qualityOpen, setQualityOpen] = useState(false);
+  const [wexLabOpen, setWexLabOpen] = useState(false);
 
   const displayName = profileName || currentUser?.email || 'Kullanıcı';
 
@@ -116,37 +109,49 @@ export default function Sidebar({ user }) {
     );
   };
 
-  const GroupButton = ({ label, isOpen, onToggle, nested = false }) => (
-    <button
-      onClick={onToggle}
-      className={`flex w-full items-center justify-between rounded-lg transition-all duration-200 hover:bg-slate-800 group ${
-        nested ? 'px-3 py-2.5' : 'px-3 py-3'
-      }`}
-    >
-      <span
-        className={`font-semibold tracking-wide group-hover:text-white ${
-          nested ? 'text-[11px] text-slate-400' : 'text-xs text-slate-300'
+  const GroupButton = ({ label, isOpen, onToggle, nested = false, tone = 'default' }) => {
+    const labelClass =
+      tone === 'violet'
+        ? 'text-[11px] text-violet-400 group-hover:text-violet-300'
+        : nested
+          ? 'text-[11px] text-slate-400'
+          : 'text-xs text-slate-300';
+
+    const chevronClass =
+      tone === 'violet'
+        ? isOpen
+          ? 'rotate-90 text-violet-400'
+          : 'text-violet-500/70'
+        : isOpen
+          ? 'rotate-90 text-emerald-400'
+          : 'text-slate-500';
+
+    const hoverClass = tone === 'violet' ? 'hover:bg-violet-950/20' : 'hover:bg-slate-800';
+
+    return (
+      <button
+        onClick={onToggle}
+        className={`flex w-full items-center justify-between rounded-lg transition-all duration-200 group ${hoverClass} ${
+          nested ? 'px-3 py-2.5' : 'px-3 py-3'
         }`}
       >
-        {label}
-      </span>
-      <span
-        className={`text-sm transition-transform duration-200 ${isOpen ? 'rotate-90 text-emerald-400' : 'text-slate-500'}`}
-      >
-        ▸
-      </span>
-    </button>
-  );
+        <span className={`font-semibold tracking-wide group-hover:text-white ${labelClass}`}>
+          {label}
+        </span>
+        <span className={`text-sm transition-transform duration-200 ${chevronClass}`}>▸</span>
+      </button>
+    );
+  };
 
   return (
-    <aside className="hidden md:flex fixed top-0 left-0 z-30 h-screen w-64 flex-col justify-between border-r border-slate-700 bg-slate-900 px-4 py-5">
+    <aside className="hidden lg:flex fixed top-0 left-0 z-30 h-screen w-64 flex-col justify-between border-r border-slate-700 bg-slate-900 px-4 py-5">
       <div className="flex flex-col overflow-y-auto">
         <div className="mb-6 border-b border-slate-700 px-2 pb-4">
           <BrandLogo size="md" />
         </div>
 
         <nav className="space-y-2">
-          <TopNavLink href={SECTION_HREFS.general}>Genel Özet</TopNavLink>
+          <TopNavLink href={SECTION_HREFS.general}>{HOME_LABEL}</TopNavLink>
 
           <div>
             <GroupButton
@@ -161,32 +166,25 @@ export default function Sidebar({ user }) {
                     {link.label}
                   </NavLink>
                 ))}
-              </div>
-            )}
-          </div>
 
-          <div>
-            <GroupButton
-              label={WORKCUBE_SECTION_LABEL}
-              isOpen={iotOpen}
-              onToggle={() => setIotOpen((open) => !open)}
-            />
-            {iotOpen && (
-              <div className="space-y-1 pl-2">
-                {W3_LINKS.map((link) => (
-                  <NavLink key={link.href} href={link.href}>
-                    {link.label}
-                  </NavLink>
-                ))}
-
-                <p className="px-4 pt-3 text-[10px] font-semibold uppercase tracking-wider text-slate-500">
-                  IoT Araçları
-                </p>
-                {IOT_TOOLS_LINKS.map((link) => (
-                  <NavLink key={link.href} href={link.href} nested>
-                    {link.label}
-                  </NavLink>
-                ))}
+                <div className="pt-1">
+                  <GroupButton
+                    label={WEX_LAB_SECTION_LABEL}
+                    isOpen={wexLabOpen}
+                    onToggle={() => setWexLabOpen((open) => !open)}
+                    nested
+                    tone="violet"
+                  />
+                  {wexLabOpen && (
+                    <div className="space-y-1 pl-2">
+                      {WEX_LAB_LINKS.map((link) => (
+                        <NavLink key={link.href} href={link.href} nested>
+                          {link.label}
+                        </NavLink>
+                      ))}
+                    </div>
+                  )}
+                </div>
               </div>
             )}
           </div>
@@ -215,6 +213,23 @@ export default function Sidebar({ user }) {
               <div className="space-y-1 pl-2">
                 <NavLink href={SECTION_HREFS.service}>Servis Özeti</NavLink>
                 <p className="px-4 py-2 text-[12px] italic text-slate-500">Modül genişletiliyor...</p>
+              </div>
+            )}
+          </div>
+
+          <div>
+            <GroupButton
+              label={REPORTS_SECTION_LABEL}
+              isOpen={reportsOpen}
+              onToggle={() => setReportsOpen((open) => !open)}
+            />
+            {reportsOpen && (
+              <div className="space-y-1 pl-2">
+                {REPORTS_LINKS.map((link) => (
+                  <NavLink key={link.href} href={link.href}>
+                    {link.label}
+                  </NavLink>
+                ))}
               </div>
             )}
           </div>

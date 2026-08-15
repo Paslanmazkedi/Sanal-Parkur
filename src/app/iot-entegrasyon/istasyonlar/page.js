@@ -1,18 +1,34 @@
 'use client';
 
 import { useCallback, useEffect, useState } from 'react';
+import AddStationModal from '@/components/station/AddStationModal';
 import W3LiveToolbar from '@/components/w3/W3LiveToolbar';
 import { readStoredCompanyId, writeStoredCompanyId } from '@/components/w3/W3CompanySelector';
+import { supabase } from '../../supabase';
 
 export default function W3StationsPage() {
   const [companyId, setCompanyId] = useState(1);
   const [companyOptions, setCompanyOptions] = useState([{ id: 1, label: 'Şirket 1' }]);
   const [rows, setRows] = useState([]);
+  const [localStations, setLocalStations] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [localLoading, setLocalLoading] = useState(true);
   const [error, setError] = useState('');
   const [fetchedAt, setFetchedAt] = useState('');
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
+  const [showModal, setShowModal] = useState(false);
+
+  const loadLocalStations = useCallback(async () => {
+    setLocalLoading(true);
+    const { data, error: localError } = await supabase
+      .from('workstations')
+      .select('station_id,station_name,branch,department,active')
+      .order('station_id', { ascending: true });
+
+    if (!localError) setLocalStations(data || []);
+    setLocalLoading(false);
+  }, []);
 
   const loadStations = useCallback(async (nextCompanyId) => {
     setLoading(true);
@@ -46,7 +62,8 @@ export default function W3StationsPage() {
     const storedCompanyId = readStoredCompanyId(1);
     setCompanyId(storedCompanyId);
     loadStations(storedCompanyId);
-  }, [loadStations]);
+    loadLocalStations();
+  }, [loadStations, loadLocalStations]);
 
   const handleCompanyChange = (nextCompanyId) => {
     setCompanyId(nextCompanyId);
@@ -71,14 +88,75 @@ export default function W3StationsPage() {
   });
 
   return (
-    <div className="mx-auto w-full min-w-0 max-w-6xl space-y-6">
-      <header>
-        <p className="text-xs font-mono uppercase tracking-widest text-violet-400">IoT Entegrasyon · Workcube W3</p>
-        <h1 className="mt-1 text-2xl font-black tracking-tight text-white sm:text-3xl">W3 İstasyonlar</h1>
-        <p className="mt-2 text-sm text-slate-400">
-          Workcube WEX export servisi uzerinden canli pull. Veri Supabase&apos;e yazilmaz.
-        </p>
+    <div className="w-full min-w-0 max-w-full space-y-6">
+      <header className="flex items-end justify-between gap-3">
+        <div>
+          <p className="text-xs font-mono uppercase tracking-widest text-emerald-400">Üretim</p>
+          <h1 className="mt-1 text-2xl font-black tracking-tight text-white sm:text-3xl">İstasyonlar</h1>
+          <p className="mt-2 text-sm text-slate-400">Saha kayıtları ve Workcube istasyon listesi.</p>
+        </div>
+        <button
+          type="button"
+          onClick={() => setShowModal(true)}
+          className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-emerald-600 text-xl font-bold text-white transition hover:bg-emerald-500"
+          title="Yeni istasyon ekle"
+          aria-label="Yeni istasyon ekle"
+        >
+          +
+        </button>
       </header>
+
+      <section className="w-full min-w-0 max-w-full overflow-x-auto rounded-xl border border-slate-800 bg-slate-900/50">
+        <div className="border-b border-slate-800 px-4 py-3">
+          <h2 className="text-sm font-semibold text-white">Saha istasyonları ({localStations.length})</h2>
+        </div>
+        <table className="min-w-[40rem] w-full text-sm">
+          <thead className="bg-slate-950/80 text-left text-[11px] uppercase tracking-wider text-slate-500">
+            <tr>
+              <th className="px-4 py-3 font-medium">ID</th>
+              <th className="px-4 py-3 font-medium">İstasyon</th>
+              <th className="px-4 py-3 font-medium">Şube</th>
+              <th className="px-4 py-3 font-medium">Departman</th>
+              <th className="px-4 py-3 font-medium">Durum</th>
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-slate-800/80">
+            {localLoading ? (
+              <tr>
+                <td colSpan={5} className="px-4 py-8 text-center text-slate-500">
+                  Yükleniyor...
+                </td>
+              </tr>
+            ) : localStations.length === 0 ? (
+              <tr>
+                <td colSpan={5} className="px-4 py-8 text-center text-slate-500">
+                  Saha kaydı yok. + ile yeni istasyon ekleyin.
+                </td>
+              </tr>
+            ) : (
+              localStations.map((st) => (
+                <tr key={st.station_id} className="bg-slate-900/30">
+                  <td className="px-4 py-3 font-mono text-slate-400">#{st.station_id}</td>
+                  <td className="px-4 py-3 font-medium text-white">{st.station_name}</td>
+                  <td className="px-4 py-3 text-slate-300">{st.branch || '—'}</td>
+                  <td className="px-4 py-3 text-slate-300">{st.department || '—'}</td>
+                  <td className="px-4 py-3">
+                    <span
+                      className={`inline-flex rounded border px-2 py-0.5 text-[10px] font-semibold ${
+                        st.active
+                          ? 'border-emerald-500/30 bg-emerald-500/10 text-emerald-300'
+                          : 'border-slate-500/30 bg-slate-500/10 text-slate-300'
+                      }`}
+                    >
+                      {st.active ? 'Aktif' : 'Pasif'}
+                    </span>
+                  </td>
+                </tr>
+              ))
+            )}
+          </tbody>
+        </table>
+      </section>
 
       <W3LiveToolbar
         companyId={companyId}
@@ -115,7 +193,10 @@ export default function W3StationsPage() {
         </div>
       ) : null}
 
-      <div className="w-full min-w-0 overflow-x-auto rounded-xl border border-slate-800 bg-slate-900/50">
+      <div className="w-full min-w-0 max-w-full overflow-x-auto rounded-xl border border-slate-800 bg-slate-900/50">
+        <div className="border-b border-slate-800 px-4 py-3">
+          <h2 className="text-sm font-semibold text-white">Workcube listesi</h2>
+        </div>
         <table className="min-w-[48rem] w-full text-sm">
           <thead className="bg-slate-950/80 text-left text-[11px] uppercase tracking-wider text-slate-500">
             <tr>
@@ -163,6 +244,8 @@ export default function W3StationsPage() {
           </tbody>
         </table>
       </div>
+
+      <AddStationModal open={showModal} onClose={() => setShowModal(false)} onCreated={loadLocalStations} />
     </div>
   );
 }

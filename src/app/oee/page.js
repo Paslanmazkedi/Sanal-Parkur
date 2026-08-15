@@ -124,12 +124,13 @@ export default function OeeMonitorPage() {
   const faultCount = summaries.filter((item) => Number(item.statusStage) === 3).length;
 
   return (
-    <div className="mx-auto max-w-7xl space-y-6">
+    <div className="w-full min-w-0 max-w-full space-y-6">
       <header className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
         <div>
-          <h1 className="text-3xl font-black tracking-tight text-white">Uretim Sahasi OEE Monitörü</h1>
+          <p className="text-xs font-mono uppercase tracking-widest text-amber-400">Raporlar</p>
+          <h1 className="mt-1 text-3xl font-black tracking-tight text-white">OEE</h1>
           <p className="mt-1 text-sm text-slate-400">
-            Tum istasyonlar icin dinamik OEE kartlari. MVP hesap; veritabani genisledikce gercek metriklere donusur.
+            Tüm istasyonlar için dinamik OEE kartları. MVP hesap; veritabanı genişledikçe gerçek metriklere dönüşür.
           </p>
         </div>
         <div className="flex flex-wrap gap-3 text-sm">
@@ -172,7 +173,7 @@ export default function OeeMonitorPage() {
         <div className="py-20 text-center text-slate-500">Istasyon verileri yukleniyor...</div>
       ) : summaries.length === 0 ? (
         <div className="rounded-2xl border border-dashed border-slate-700 py-20 text-center text-slate-500">
-          Aktif istasyon bulunamadi. Once istasyon konfigurasyonundan tanimlayin.
+          Aktif istasyon bulunamadı. Önce İstasyonlar sayfasından tanımlayın.
         </div>
       ) : (
         <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">

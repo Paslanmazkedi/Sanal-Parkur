@@ -82,7 +82,7 @@ export default function LogPage() {
   }, [filter]);
 
   return (
-    <div className="max-w-7xl mx-auto space-y-5">
+    <div className="w-full min-w-0 max-w-full space-y-5">
       <header>
         <h1 className="text-3xl font-black text-white tracking-tight">Üretim Entegrasyon Logları</h1>
         <p className="text-slate-400 text-sm mt-1">WEX üzerinden gelen paketler ve üretim emri güncelleme sonuçları.</p>
@@ -128,7 +128,7 @@ export default function LogPage() {
            Logları Temizle
          </button>
        </div>
-       <div className="overflow-x-auto rounded-xl border border-slate-800 bg-slate-900/50">
+       <div className="w-full min-w-0 max-w-full overflow-x-auto rounded-xl border border-slate-800 bg-slate-900/50">
         <table className="min-w-full text-sm">
           <thead className="bg-slate-950/70 text-left text-xs uppercase tracking-wider text-slate-400">
                <tr>

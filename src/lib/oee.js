@@ -100,12 +100,19 @@ export function summarizeStations(workstations = [], orders = []) {
     );
     const activeOrder = pickActiveOrder(stationOrders);
     const queueCount = stationOrders.filter((o) => Number(o.is_stage) === 4).length;
+    const orderCount = stationOrders.length;
     const metrics = calculateOee({ activeOrder });
+
+    const pausedCount = stationOrders.filter((o) => Number(o.is_stage) === 3).length;
+    const runningCount = stationOrders.filter((o) => Number(o.is_stage) === 1).length;
 
     return {
       station,
       activeOrder,
       queueCount,
+      pausedCount,
+      runningCount,
+      orderCount,
       metrics,
       statusStage: activeOrder?.is_stage ?? (queueCount > 0 ? 4 : null),
     };

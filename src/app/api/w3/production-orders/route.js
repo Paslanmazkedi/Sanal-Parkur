@@ -8,7 +8,9 @@ export async function GET(request) {
   try {
     const { searchParams } = new URL(request.url);
     const companyId = searchParams.get('company_id');
-    const data = await fetchWexProductionOrders(companyId);
+    const startDate = searchParams.get('start_date') || undefined;
+    const finishDate = searchParams.get('finish_date') || undefined;
+    const data = await fetchWexProductionOrders(companyId, { startDate, finishDate });
 
     return NextResponse.json({
       success: true,

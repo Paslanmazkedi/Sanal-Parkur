@@ -1,8 +1,9 @@
+import { Suspense } from 'react';
 import './globals.css';
 import LayoutWrapper from './components/LayoutWrapper';
 
 export const metadata = {
-  title: 'Sanal Parkur — Genel Özet',
+  title: 'Sanal Parkur — Ana Sayfa',
   description: 'Üretim, kalite ve servis genel bakış paneli',
   applicationName: 'Sanal Parkur',
   appleWebApp: {
@@ -28,8 +29,16 @@ export const metadata = {
 export default function RootLayout({ children }) {
   return (
     <html lang="tr">
-      <body className="min-h-screen bg-gray-50">
-        <LayoutWrapper>{children}</LayoutWrapper>
+      <body className="min-h-screen max-w-[100vw] overflow-x-hidden bg-gray-50">
+        <Suspense
+          fallback={
+            <div className="grid min-h-screen place-items-center bg-slate-950 text-slate-400 text-sm font-mono">
+              Yükleniyor...
+            </div>
+          }
+        >
+          <LayoutWrapper>{children}</LayoutWrapper>
+        </Suspense>
       </body>
     </html>
   );

@@ -6,7 +6,7 @@ export default function manifest() {
     start_url: '/',
     scope: '/',
     display: 'standalone',
-    orientation: 'portrait',
+    orientation: 'any',
     background_color: '#0A0A0A',
     theme_color: '#0A0A0A',
     lang: 'tr',
@@ -28,6 +28,15 @@ export default function manifest() {
         sizes: '512x512',
         type: 'image/png',
         purpose: 'maskable',
+      },
+    ],
+    shortcuts: [
+      {
+        name: 'Operatör Paneli',
+        short_name: 'Operatör',
+        description: 'Tam ekran saha operatör paneli',
+        url: '/station?kiosk=1',
+        icons: [{ src: '/icons/icon-192.png', sizes: '192x192', type: 'image/png' }],
       },
     ],
   };

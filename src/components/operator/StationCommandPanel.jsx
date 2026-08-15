@@ -25,9 +25,15 @@ export default function StationCommandPanel({
   clock,
   onAction,
   onOpenTimeEntry,
+  touchFriendly = false,
+  blockingOrder = null,
 }) {
   const currentStage = selectedOrder ? Number(selectedOrder.is_stage) : null;
   const stageMeta = selectedOrder ? getStageMeta(selectedOrder.is_stage) : null;
+
+  const actionButtonClass = touchFriendly
+    ? 'min-h-12 rounded-xl border px-5 py-3 text-base font-semibold transition-colors disabled:cursor-not-allowed disabled:opacity-40'
+    : 'rounded-xl border px-4 py-2.5 text-sm font-semibold transition-colors disabled:cursor-not-allowed disabled:opacity-40';
 
   return (
     <section className="overflow-hidden rounded-2xl border border-slate-800 bg-slate-900/50 shadow-xl">
@@ -84,7 +90,7 @@ export default function StationCommandPanel({
               </dl>
             </>
           ) : (
-            <p className="text-sm text-slate-500">İşlem paneli için yukarıdan bir istasyon seçin.</p>
+            <p className="text-sm text-slate-500">İstasyon bulunamadı — panoya dönüp tekrar seçin.</p>
           )}
         </div>
 
@@ -118,7 +124,7 @@ export default function StationCommandPanel({
           <StationOrderCard order={selectedOrder} highlight />
         ) : (
           <div className="rounded-xl border border-dashed border-slate-700 py-10 text-center text-sm text-slate-500">
-            Aşağıdaki listeden bir emir seçin. Kontrol, başlat, duraklat ve bitir işlemleri bu emir için uygulanır.
+            Aşağıdaki listeden bir emir seçin. Başlat, duraklat ve sonuç gir bu emir için uygulanır.
           </div>
         )}
 
@@ -126,7 +132,9 @@ export default function StationCommandPanel({
           <p className="mb-3 text-[10px] font-mono uppercase tracking-wider text-slate-500">Emir işlemleri</p>
           <div className="flex flex-wrap gap-2">
             {Object.entries(OPERATOR_ACTIONS).map(([action, config]) => {
-              const disabledReason = getActionDisabledReason(action, currentStage, Boolean(selectedOrder));
+              const disabledReason = getActionDisabledReason(action, currentStage, Boolean(selectedOrder), {
+                blockingOrder,
+              });
               return (
                 <button
                   key={action}
@@ -134,7 +142,7 @@ export default function StationCommandPanel({
                   disabled={Boolean(disabledReason) || busy || !stationId}
                   title={disabledReason || config.label}
                   onClick={() => onAction(action)}
-                  className={`rounded-xl border px-4 py-2.5 text-sm font-semibold transition-colors disabled:cursor-not-allowed disabled:opacity-40 ${actionStyles[action]}`}
+                  className={`${actionButtonClass} ${actionStyles[action]}`}
                 >
                   {config.label}
                 </button>
@@ -144,13 +152,18 @@ export default function StationCommandPanel({
               type="button"
               disabled={!selectedOrder || busy || !stationId}
               onClick={onOpenTimeEntry}
-              className="rounded-xl border border-violet-500/40 bg-violet-500/10 px-4 py-2.5 text-sm font-semibold text-violet-200 hover:bg-violet-500/20 disabled:cursor-not-allowed disabled:opacity-40"
+              className={`${actionButtonClass} border-violet-500/40 bg-violet-500/10 text-violet-200 hover:bg-violet-500/20 disabled:cursor-not-allowed disabled:opacity-40`}
             >
               Zaman Harcaması
             </button>
           </div>
           {!selectedOrder && stationId && (
-            <p className="mt-3 text-xs text-amber-400/90">Önce kuyruk veya aktif listeden emir seçin.</p>
+            <p className="mt-3 text-xs text-amber-400/90">Önce kuyruk veya park listesinden emir seçin.</p>
+          )}
+          {blockingOrder && selectedOrder && Number(selectedOrder.p_order_id) !== Number(blockingOrder.p_order_id) && (
+            <p className="mt-3 text-xs text-amber-400/90">
+              {blockingOrder.p_order_no} üretimde. Yeni emir için önce duraklatın veya sonuç girin.
+            </p>
           )}
         </div>
       </div>

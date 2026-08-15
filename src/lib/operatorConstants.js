@@ -1,8 +1,8 @@
 export const OPERATOR_ACTIONS = {
   control: { label: 'Kontrol', toStage: 0, fromStages: [4] },
-  start: { label: 'Baslat', toStage: 1, fromStages: [0, 3, 4] },
+  start: { label: 'Başlat', toStage: 1, fromStages: [0, 3, 4] },
   pause: { label: 'Duraklat', toStage: 3, fromStages: [1] },
-  finish: { label: 'Bitir', toStage: 2, fromStages: [0, 1, 3] },
+  finish: { label: 'Sonuç gir', toStage: 2, fromStages: [0, 1, 3] },
 };
 
 export function canPerformAction(action, currentStage) {
@@ -11,12 +11,16 @@ export function canPerformAction(action, currentStage) {
   return config.fromStages.includes(Number(currentStage));
 }
 
-export function getActionDisabledReason(action, currentStage, hasSelectedOrder) {
-  if (!hasSelectedOrder) return 'Once bir uretim emri secin.';
+export function getActionDisabledReason(action, currentStage, hasSelectedOrder, extra = {}) {
+  if (!hasSelectedOrder) return 'Önce bir üretim emri seçin.';
   const config = OPERATOR_ACTIONS[action];
-  if (!config) return 'Gecersiz aksiyon.';
+  if (!config) return 'Geçersiz aksiyon.';
   if (!config.fromStages.includes(Number(currentStage))) {
-    return `${config.label} icin uygun durum degil (mevcut: ${currentStage}).`;
+    return `${config.label} için uygun durum değil (mevcut: ${currentStage}).`;
+  }
+  if (action === 'start' && extra.blockingOrder) {
+    const orderNo = extra.blockingOrder.p_order_no || `#${extra.blockingOrder.p_order_id}`;
+    return `Önce ${orderNo} emrini duraklatın veya sonuç girin.`;
   }
   return null;
 }

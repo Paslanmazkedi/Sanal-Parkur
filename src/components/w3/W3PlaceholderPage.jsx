@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import { SECTION_HREFS } from '@/lib/navigation';
+import { PRODUCTION_ORDERS_HREF } from '@/lib/navigation';
 
 export default function W3PlaceholderPage({
   title,
@@ -7,9 +7,9 @@ export default function W3PlaceholderPage({
   integrationNote = 'API key tabanlı W3 bağlantısı henüz yapılandırılmadı.',
 }) {
   return (
-    <div className="mx-auto w-full min-w-0 max-w-4xl space-y-6">
+    <div className="w-full min-w-0 max-w-full space-y-6">
       <header>
-        <p className="text-xs font-mono uppercase tracking-widest text-violet-400">IoT Entegrasyon · Workcube W3</p>
+        <p className="text-xs font-mono uppercase tracking-widest text-emerald-400">Üretim</p>
         <h1 className="mt-1 text-2xl font-black tracking-tight text-white sm:text-3xl">{title}</h1>
         <p className="mt-2 max-w-2xl text-sm leading-relaxed text-slate-400">{description}</p>
       </header>
@@ -32,8 +32,8 @@ export default function W3PlaceholderPage({
         <p className="mx-auto mt-2 max-w-md text-sm text-slate-500">{integrationNote}</p>
       </div>
 
-      <Link href={SECTION_HREFS.iot} className="inline-flex text-sm text-emerald-400 hover:underline">
-        ← IoT Entegrasyon özetine dön
+      <Link href={PRODUCTION_ORDERS_HREF} className="inline-flex text-sm text-emerald-400 hover:underline">
+        ← Üretim emirlerine dön
       </Link>
     </div>
   );
