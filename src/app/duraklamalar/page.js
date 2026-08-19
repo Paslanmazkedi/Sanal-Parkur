@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
+import PageHeader from '@/components/PageHeader';
 import { getStageMeta } from '@/lib/stationStages';
 import { supabase } from '../supabase';
 
@@ -86,13 +87,15 @@ export default function DowntimeReportPage() {
 
   return (
     <div className="w-full min-w-0 max-w-full space-y-6">
-      <header>
-        <p className="text-xs font-mono uppercase tracking-widest text-amber-400">Raporlar</p>
-        <h1 className="mt-1 text-3xl font-black tracking-tight text-white">Duraklamalar</h1>
-        <p className="mt-2 text-sm text-slate-400">
-          Duraklatılmış emirler ve kaydedilmiş duruşlar.
-        </p>
-      </header>
+      <PageHeader
+        title="Duraklamalar"
+        titleClassName="text-amber-100"
+        crumbs={[
+          { label: 'Raporlar', href: '/oee' },
+          { label: 'Duraklamalar' },
+        ]}
+        description="Duraklatılmış emirler ve kaydedilmiş duruşlar."
+      />
 
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
         <div className="rounded-2xl border border-slate-800 bg-slate-900/60 p-5">

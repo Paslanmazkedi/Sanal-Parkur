@@ -1,5 +1,7 @@
 'use client';
+
 import { useState, useEffect } from 'react';
+import PageHeader from '@/components/PageHeader';
 import { supabase } from '../../supabase';
 
 export default function IotGatewayPage() {
@@ -29,8 +31,16 @@ export default function IotGatewayPage() {
 
   return (
     <div className="w-full min-w-0 max-w-full space-y-4 text-gray-100">
-      <h1 className="text-2xl font-bold">IoT Gateway – Production Order Operations</h1>
-      {loading && <p className="mb-2">Yükleniyor...</p>}
+      <PageHeader
+        title="IoT Gateway"
+        titleClassName="text-violet-100"
+        crumbs={[
+          { label: 'WEX Lab', href: '/simulator' },
+          { label: 'IoT Gateway' },
+        ]}
+        description="Production order operations canlı akışı."
+      />
+      {loading && <p className="mb-2 text-sm text-slate-400">Yükleniyor...</p>}
       <div className="w-full min-w-0 max-w-full overflow-x-auto rounded-xl border border-slate-800">
         <table className="min-w-full bg-slate-900/50 text-sm">
           <thead>

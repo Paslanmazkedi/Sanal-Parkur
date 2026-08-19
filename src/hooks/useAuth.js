@@ -11,10 +11,33 @@ export function useAuth() {
   useEffect(() => {
     let isMounted = true;
 
+    const clearStaleSession = async () => {
+      await supabase.auth.signOut({ scope: 'local' });
+      if (!isMounted) return;
+      setSession(null);
+      setUser(null);
+      setLoading(false);
+    };
+
+    const isInvalidRefreshToken = (error) => {
+      if (!error) return false;
+      const message = String(error.message || '');
+      return (
+        error.code === 'refresh_token_not_found' ||
+        message.includes('Refresh Token Not Found') ||
+        message.includes('Invalid Refresh Token')
+      );
+    };
+
     const loadSession = async () => {
       const { data, error } = await supabase.auth.getSession();
 
       if (!isMounted) return;
+
+      if (isInvalidRefreshToken(error)) {
+        await clearStaleSession();
+        return;
+      }
 
       if (error) {
         console.error('Supabase session error:', error);
@@ -29,7 +52,14 @@ export function useAuth() {
 
     const {
       data: { subscription },
-    } = supabase.auth.onAuthStateChange((_event, nextSession) => {
+    } = supabase.auth.onAuthStateChange(async (event, nextSession) => {
+      if (!isMounted) return;
+
+      if (event === 'TOKEN_REFRESHED' && !nextSession) {
+        await clearStaleSession();
+        return;
+      }
+
       setSession(nextSession);
       setUser(nextSession?.user ?? null);
       setLoading(false);

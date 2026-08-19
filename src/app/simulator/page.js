@@ -1,5 +1,6 @@
 'use client';
 import { useEffect, useState } from 'react';
+import PageHeader from '@/components/PageHeader';
 import { supabase } from '../supabase';
 
   // Default JSON template aligned with original Postman model (minimal required fields)
@@ -395,10 +396,15 @@ export default function SimulatorPage() {
         </button>
       </div>
 
-      <header>
-        <h1 className="text-3xl font-black text-white tracking-tight"> Demir Şahin Simülatör</h1>
-        <p className="text-slate-400 text-sm mt-1">Saha cihazı, Entegrasyon kapısı ve üretim havuzu arasındaki canlı paket akışını yönetimi</p>
-      </header>
+      <PageHeader
+        title="PLC Simülatör"
+        titleClassName="text-violet-100"
+        crumbs={[
+          { label: 'WEX Lab', href: '/simulator' },
+          { label: 'PLC Simülatör' },
+        ]}
+        description="Saha cihazı, entegrasyon kapısı ve üretim havuzu arasındaki canlı paket akışını yönetimi."
+      />
 
       {result && (
         <div className={`p-4 rounded-xl border text-sm font-mono font-semibold transition-all ${

@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import OeeMetricBar from '@/components/station/OeeMetricBar';
+import PageHeader from '@/components/PageHeader';
 import { getOeeBorderClass, getOeeTextClass, summarizeStations } from '@/lib/oee';
 import { getStageMeta } from '@/lib/stationStages';
 import { supabase } from '../supabase';
@@ -125,28 +126,30 @@ export default function OeeMonitorPage() {
 
   return (
     <div className="w-full min-w-0 max-w-full space-y-6">
-      <header className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
-        <div>
-          <p className="text-xs font-mono uppercase tracking-widest text-amber-400">Raporlar</p>
-          <h1 className="mt-1 text-3xl font-black tracking-tight text-white">OEE</h1>
-          <p className="mt-1 text-sm text-slate-400">
-            Tüm istasyonlar için dinamik OEE kartları. MVP hesap; veritabanı genişledikçe gerçek metriklere dönüşür.
-          </p>
-        </div>
-        <div className="flex flex-wrap gap-3 text-sm">
-          <Link
-            href="/station"
-            className="rounded-xl border border-slate-700 px-4 py-2 text-slate-300 transition-colors hover:border-emerald-500/40 hover:text-white"
-          >
-            Operatör paneli
-          </Link>
-          {lastUpdated && (
-            <span className="rounded-xl border border-slate-800 bg-slate-900/60 px-4 py-2 text-slate-500">
-              Guncelleme: {lastUpdated.toLocaleTimeString('tr-TR', { hour12: false })}
-            </span>
-          )}
-        </div>
-      </header>
+      <PageHeader
+        title="OEE"
+        titleClassName="text-amber-100"
+        crumbs={[
+          { label: 'Raporlar', href: '/oee' },
+          { label: 'OEE' },
+        ]}
+        description="Tüm istasyonlar için dinamik OEE kartları. MVP hesap; veritabanı genişledikçe gerçek metriklere dönüşür."
+        actions={
+          <>
+            <Link
+              href="/station"
+              className="rounded-xl border border-slate-700 px-4 py-2 text-sm text-slate-300 transition-colors hover:border-emerald-500/40 hover:text-white"
+            >
+              Operatör paneli
+            </Link>
+            {lastUpdated && (
+              <span className="rounded-xl border border-slate-800 bg-slate-900/60 px-4 py-2 text-sm text-slate-500">
+                Guncelleme: {lastUpdated.toLocaleTimeString('tr-TR', { hour12: false })}
+              </span>
+            )}
+          </>
+        }
+      />
 
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
         <div className="rounded-2xl border border-slate-800 bg-slate-900/60 p-5">

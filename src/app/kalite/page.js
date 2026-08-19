@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
 import DashboardSection from '@/components/dashboard/DashboardSection';
+import PageHeader from '@/components/PageHeader';
 import { SECTION_HREFS } from '@/lib/navigation';
 import { loadDashboardSnapshot } from '@/lib/dashboardMetrics';
 import { supabase } from '../supabase';
@@ -26,13 +27,12 @@ export default function QualityHubPage() {
 
   return (
     <div className="w-full min-w-0 max-w-full space-y-8">
-      <header>
-        <p className="text-xs font-mono uppercase tracking-widest text-rose-400">Kalite</p>
-        <h1 className="mt-1 text-3xl font-black tracking-tight text-white md:text-4xl">Kalite Özeti</h1>
-        <p className="mt-2 max-w-2xl text-sm text-slate-400">
-          Fire kayıtları ve kalite kontrol metrikleri.
-        </p>
-      </header>
+      <PageHeader
+        title="Kalite Özeti"
+        titleClassName="text-rose-100"
+        crumbs={[{ label: 'Kalite' }, { label: 'Kalite Özeti' }]}
+        description="Fire kayıtları ve kalite kontrol metrikleri."
+      />
 
       <div className="grid gap-4 sm:grid-cols-2">
         <div className="rounded-xl border border-rose-500/20 bg-slate-900/50 px-4 py-4">

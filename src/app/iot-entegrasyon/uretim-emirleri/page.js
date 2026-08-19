@@ -1,6 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
+import PageHeader from '@/components/PageHeader';
 import { W3StageBadge } from '@/components/w3/W3LiveToolbar';
 import { readStoredCompanyId, writeStoredCompanyId } from '@/components/w3/W3CompanySelector';
 import { STAGE_META } from '@/lib/stationStages';
@@ -333,10 +334,15 @@ export default function W3ProductionOrdersPage() {
 
   return (
     <div className="w-full min-w-0 max-w-full space-y-4">
-      <header className="flex items-center justify-between gap-3">
-        <div className="min-w-0 flex-1">
-          <h1 className="text-xl font-bold tracking-tight text-white sm:text-2xl">Üretim Emirleri</h1>
-          <p className="mt-0.5 truncate text-xs text-slate-400">
+      <PageHeader
+        title="Üretim Emirleri"
+        titleClassName="text-emerald-100"
+        crumbs={[
+          { label: 'Üretim', href: '/station' },
+          { label: 'Üretim Emirleri' },
+        ]}
+        description={
+          <>
             <span className="tabular-nums text-slate-300">{filteredRows.length}</span>
             <span className="text-slate-600"> kayıt</span>
             {fetchedAt ? (
@@ -348,36 +354,37 @@ export default function W3ProductionOrdersPage() {
                 </span>
               </>
             ) : null}
-          </p>
-        </div>
+          </>
+        }
+        actions={
+          <>
+            <select
+              value={companyId}
+              disabled={loading}
+              onChange={(event) => handleCompanyChange(Number(event.target.value))}
+              aria-label="Şirket"
+              className={`${FILTER_CONTROL} w-[7.5rem] sm:min-w-[8.5rem] sm:w-auto`}
+            >
+              {companyOptions.map((option) => (
+                <option key={option.id} value={option.id}>
+                  {option.label}
+                </option>
+              ))}
+            </select>
 
-        <div className="flex shrink-0 items-center gap-2">
-          <select
-            value={companyId}
-            disabled={loading}
-            onChange={(event) => handleCompanyChange(Number(event.target.value))}
-            aria-label="Şirket"
-            className={`${FILTER_CONTROL} w-[7.5rem] sm:min-w-[8.5rem] sm:w-auto`}
-          >
-            {companyOptions.map((option) => (
-              <option key={option.id} value={option.id}>
-                {option.label}
-              </option>
-            ))}
-          </select>
-
-          <button
-            type="button"
-            onClick={() => loadOrders(companyId, { dateFrom: appliedDateFrom, dateTo: appliedDateTo })}
-            disabled={loading}
-            title="Workcube’dan yenile"
-            aria-label="Workcube’dan yenile"
-            className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-amber-500/35 bg-gradient-to-br from-amber-500/15 to-emerald-500/15 text-amber-400 transition hover:border-emerald-500/40 hover:text-emerald-300 disabled:cursor-not-allowed disabled:opacity-40"
-          >
-            <RefreshIcon className={`h-4 w-4 ${loading ? 'animate-spin' : ''}`} />
-          </button>
-        </div>
-      </header>
+            <button
+              type="button"
+              onClick={() => loadOrders(companyId, { dateFrom: appliedDateFrom, dateTo: appliedDateTo })}
+              disabled={loading}
+              title="Workcube’dan yenile"
+              aria-label="Workcube’dan yenile"
+              className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-amber-500/35 bg-gradient-to-br from-amber-500/15 to-emerald-500/15 text-amber-400 transition hover:border-emerald-500/40 hover:text-emerald-300 disabled:cursor-not-allowed disabled:opacity-40"
+            >
+              <RefreshIcon className={`h-4 w-4 ${loading ? 'animate-spin' : ''}`} />
+            </button>
+          </>
+        }
+      />
 
       {/* Mobil / tablet: açılır filtreleme seçenekleri */}
       <div className="rounded-xl border border-slate-800 bg-slate-900/40 lg:hidden">

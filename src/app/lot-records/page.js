@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import { PRODUCTION_ORDERS_HREF } from '@/lib/navigation';
 import { useEffect, useState } from 'react';
+import PageHeader from '@/components/PageHeader';
 import { getStageMeta } from '@/lib/stationStages';
 import { supabase } from '../supabase';
 
@@ -61,13 +62,15 @@ export default function LotRecordsPage() {
   return (
     <div className="w-full min-w-0 max-w-full space-y-6">
       <header className="space-y-3">
-        <div>
-          <p className="text-xs font-mono uppercase tracking-widest text-violet-400">IoT Entegrasyon</p>
-          <h1 className="mt-1 text-2xl font-black tracking-tight text-white sm:text-3xl">Lot Kayıtları</h1>
-          <p className="mt-2 text-sm text-slate-400">
-            Üretim emirlerindeki lot numaraları ve ilişkili sipariş bilgileri.
-          </p>
-        </div>
+        <PageHeader
+          title="Lot Kayıtları"
+          titleClassName="text-violet-100"
+          crumbs={[
+            { label: 'Üretim', href: '/station' },
+            { label: 'Lot Kayıtları' },
+          ]}
+          description="Üretim emirlerindeki lot numaraları ve ilişkili sipariş bilgileri."
+        />
 
         <input
           type="search"

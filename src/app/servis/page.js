@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
 import DashboardSection from '@/components/dashboard/DashboardSection';
+import PageHeader from '@/components/PageHeader';
 import { SECTION_HREFS } from '@/lib/navigation';
 import { loadDashboardSnapshot } from '@/lib/dashboardMetrics';
 import { supabase } from '../supabase';
@@ -26,13 +27,12 @@ export default function ServiceHubPage() {
 
   return (
     <div className="w-full min-w-0 max-w-full space-y-8">
-      <header>
-        <p className="text-xs font-mono uppercase tracking-widest text-sky-400">Servis</p>
-        <h1 className="mt-1 text-3xl font-black tracking-tight text-white md:text-4xl">Servis Özeti</h1>
-        <p className="mt-2 max-w-2xl text-sm text-slate-400">
-          Makine, istasyon ve cihaz durumları.
-        </p>
-      </header>
+      <PageHeader
+        title="Servis Özeti"
+        titleClassName="text-sky-100"
+        crumbs={[{ label: 'Servis' }, { label: 'Servis Özeti' }]}
+        description="Makine, istasyon ve cihaz durumları."
+      />
 
       {service?.moduleReady ? (
         <div className="grid gap-4 sm:grid-cols-3">

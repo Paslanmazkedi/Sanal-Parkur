@@ -3,6 +3,7 @@
 export const dynamic = 'force-dynamic';
 
 import { useEffect, useState, Fragment } from "react";
+import PageHeader from "@/components/PageHeader";
 import { supabase } from "../supabase";
 
 const FILTERS = [
@@ -83,10 +84,15 @@ export default function LogPage() {
 
   return (
     <div className="w-full min-w-0 max-w-full space-y-5">
-      <header>
-        <h1 className="text-3xl font-black text-white tracking-tight">Üretim Entegrasyon Logları</h1>
-        <p className="text-slate-400 text-sm mt-1">WEX üzerinden gelen paketler ve üretim emri güncelleme sonuçları.</p>
-      </header>
+      <PageHeader
+        title="Entegrasyon Logları"
+        titleClassName="text-violet-100"
+        crumbs={[
+          { label: 'WEX Lab', href: '/simulator' },
+          { label: 'Entegrasyon Logları' },
+        ]}
+        description="WEX üzerinden gelen paketler ve üretim emri güncelleme sonuçları."
+      />
 
       <div className="flex flex-wrap gap-2">
         {FILTERS.map((item) => (

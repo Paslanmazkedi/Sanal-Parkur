@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useState } from 'react';
 import AddStationModal from '@/components/station/AddStationModal';
+import PageHeader from '@/components/PageHeader';
 import W3LiveToolbar from '@/components/w3/W3LiveToolbar';
 import { readStoredCompanyId, writeStoredCompanyId } from '@/components/w3/W3CompanySelector';
 import { supabase } from '../../supabase';
@@ -89,22 +90,26 @@ export default function W3StationsPage() {
 
   return (
     <div className="w-full min-w-0 max-w-full space-y-6">
-      <header className="flex items-end justify-between gap-3">
-        <div>
-          <p className="text-xs font-mono uppercase tracking-widest text-emerald-400">Üretim</p>
-          <h1 className="mt-1 text-2xl font-black tracking-tight text-white sm:text-3xl">İstasyonlar</h1>
-          <p className="mt-2 text-sm text-slate-400">Saha kayıtları ve Workcube istasyon listesi.</p>
-        </div>
-        <button
-          type="button"
-          onClick={() => setShowModal(true)}
-          className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-emerald-600 text-xl font-bold text-white transition hover:bg-emerald-500"
-          title="Yeni istasyon ekle"
-          aria-label="Yeni istasyon ekle"
-        >
-          +
-        </button>
-      </header>
+      <PageHeader
+        title="İstasyonlar"
+        titleClassName="text-emerald-100"
+        crumbs={[
+          { label: 'Üretim', href: '/station' },
+          { label: 'İstasyonlar' },
+        ]}
+        description="Saha kayıtları ve Workcube istasyon listesi."
+        actions={
+          <button
+            type="button"
+            onClick={() => setShowModal(true)}
+            className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-emerald-600 text-xl font-bold text-white transition hover:bg-emerald-500"
+            title="Yeni istasyon ekle"
+            aria-label="Yeni istasyon ekle"
+          >
+            +
+          </button>
+        }
+      />
 
       <section className="w-full min-w-0 max-w-full overflow-x-auto rounded-xl border border-slate-800 bg-slate-900/50">
         <div className="border-b border-slate-800 px-4 py-3">

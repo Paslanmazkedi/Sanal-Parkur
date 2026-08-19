@@ -98,6 +98,7 @@ export const PAGE_TITLES = {
   '/servis': 'Servis Özeti',
   '/lot-records': 'Lot Kayıtları',
   '/login': 'Giriş',
+  '/hesabim': 'Hesabım',
 };
 
 export const MORE_MENU_SECTIONS = [
