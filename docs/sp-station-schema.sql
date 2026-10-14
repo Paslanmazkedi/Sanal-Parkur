@@ -21,7 +21,10 @@ create table if not exists production.sp_station (
 comment on table production.sp_station is
   'SP_STATION — IoT son paket. Kimlik: x-device-key (sonra integration_devices).';
 
-grant select on production.sp_station to anon, authenticated;
-grant insert, update on production.sp_station to authenticated;
+grant usage on schema production to anon, authenticated, service_role;
+grant all privileges on table production.sp_station to service_role;
+grant select, insert, update on table production.sp_station to anon, authenticated;
 
 alter table production.sp_station disable row level security;
+
+grant delete on table production.logs to anon, authenticated, service_role;

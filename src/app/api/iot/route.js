@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { serverSupabase as supabase } from '@/lib/serverSupabase';
 import { authenticateProductionDevice, getClientIp, getDeviceKey } from '@/lib/productionDeviceAuth';
 import { buildSpStationRow, numberOrNull } from '@/lib/iotStation';
+import { trimProductionLogs } from '@/lib/trimProductionLogs';
 
 function stationIdFromBody(body) {
   const raw = body.station_id ?? body.STATION_ID;
@@ -24,7 +25,9 @@ async function writeIotLog({ direction, ip, event, outcome, payload, error, deta
   });
   if (logError) {
     console.error('IoT log insert error:', logError);
+    return;
   }
+  await trimProductionLogs(supabase);
 }
 
 export async function POST(request) {

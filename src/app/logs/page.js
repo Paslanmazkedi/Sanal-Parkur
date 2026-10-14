@@ -2,9 +2,10 @@
 
 export const dynamic = 'force-dynamic';
 
-import { useEffect, useState, Fragment } from "react";
+import { useCallback, useEffect, useState, Fragment } from "react";
 import PageHeader from "@/components/PageHeader";
 import { supabase } from "../supabase";
+import { LOG_KEEP_COUNT, trimProductionLogs } from "@/lib/trimProductionLogs";
 
 const FILTERS = [
   { value: "all", label: "Tüm Akış" },
@@ -74,31 +75,44 @@ export default function LogPage() {
   // UI state for search and accordion
   const [searchTerm, setSearchTerm] = useState("");
   const [openRowId, setOpenRowId] = useState(null);
+  const [trimming, setTrimming] = useState(false);
+
+  const fetchLogs = useCallback(async () => {
+    let query = supabase
+      .schema("production")
+      .from("logs")
+      .select("id, ip, payload, direction, created_at");
+
+    if (filter !== "all") query = query.eq("direction", filter);
+
+    const { data, error } = await query.order("created_at", { ascending: false }).limit(200);
+
+    if (error) {
+      console.error(error);
+      setErrorMsg(`Loglar getirilemedi: ${error.message || "Bilinmeyen hata"}`);
+      setLogs([]);
+      return;
+    }
+
+    setErrorMsg("");
+    setLogs(data || []);
+  }, [filter]);
 
   useEffect(() => {
-    const fetchLogs = async () => {
-      let query = supabase
-        .schema("production")
-        .from("logs")
-        .select("id, ip, payload, direction, created_at");
-
-      if (filter !== "all") query = query.eq("direction", filter);
-
-      const { data, error } = await query.order("created_at", { ascending: false }).limit(200);
-
-      if (error) {
-        console.error(error);
-        setErrorMsg(`Loglar getirilemedi: ${error.message || "Bilinmeyen hata"}`);
-        setLogs([]);
-        return;
-      }
-
-      setErrorMsg("");
-      setLogs(data || []);
-    };
-
     fetchLogs();
-  }, [filter]);
+  }, [fetchLogs]);
+
+  const handleTrimLogs = async () => {
+    if (!window.confirm(`Son ${LOG_KEEP_COUNT} kayıt kalsın, daha eskiler silinsin mi?`)) return;
+    setTrimming(true);
+    const result = await trimProductionLogs(supabase);
+    setTrimming(false);
+    if (!result.ok) {
+      setErrorMsg(`Log temizlenemedi: ${result.error}. DELETE yetkisi: grant delete on production.logs to anon, authenticated;`);
+      return;
+    }
+    await fetchLogs();
+  };
 
   return (
     <div className="w-full min-w-0 max-w-full space-y-5">
@@ -145,8 +159,10 @@ export default function LogPage() {
            />
          </div>
          <button
-           className="flex items-center gap-1 px-3 py-1 bg-red-50 text-red-600 rounded hover:bg-red-100 border border-red-600"
-           onClick={() => console.log('Logları temizle')}
+           type="button"
+           disabled={trimming}
+           className="flex items-center gap-1 px-3 py-1 bg-red-50 text-red-600 rounded hover:bg-red-100 border border-red-600 disabled:opacity-50"
+           onClick={handleTrimLogs}
          >
            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 6h18M9 6V4a1 1 0 011-1h4a1 1 0 011 1v2m-6 0h6" /></svg>
            Logları Temizle

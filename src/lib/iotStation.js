@@ -46,7 +46,7 @@ export function extractSignals(body) {
 
 export function buildSpStationRow({ stationId, deviceId, body }) {
   const signals = extractSignals(body);
-  const overallKey = firstPresent(signals, ['OVERALL_COUNT', 'overall_count']);
+  const overallKey = firstPresent(signals, ['OVERALL_COUNT', 'overall_count', 'COUNT', 'count']);
   const statusKey = firstPresent(signals, ['MACHINE_STATUS', 'machine_status']);
   const plcOrderKey = firstPresent(signals, ['P_ORDER_ID', 'p_order_id', 'plc_p_order_id']);
   const queueOrderKey = firstPresent(signals, ['QUEUE_P_ORDER_ID', 'queue_p_order_id']);

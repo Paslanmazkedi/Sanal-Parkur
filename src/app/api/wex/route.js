@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { serverSupabase as supabase } from '@/lib/serverSupabase';
 import { authenticateProductionDevice, getClientIp } from '@/lib/productionDeviceAuth';
+import { trimProductionLogs } from '@/lib/trimProductionLogs';
 
 const STAGE_ALIASES = ['is_stage', 'IS_STAGE'];
 const COUNTER_ALIASES = ['counter_value', 'COUNTER_VALUE', 'result_amount', 'RESULT_AMOUNT'];
@@ -37,7 +38,9 @@ async function writeProductionLog({ direction, ip, event, outcome, payload, erro
   if (logError) {
     console.error('WEX log insert error:', logError);
     logErrors?.push(logError.message || 'Unknown log insert error');
+    return;
   }
+  await trimProductionLogs(supabase);
 }
 
 export async function POST(request) {

@@ -1,0 +1,22 @@
+{
+  "station_id": 54,
+  "read_at": "2026-10-14T13:00:00Z",
+  "signals": {
+    "OVERALL_COUNT": 34953,
+    "P_ORDER_ID": null,
+    "RESULT_AMOUNT": null,
+    "QUEUE_P_ORDER_ID": null,
+    "QUEUE_QUANTITY": null,
+    "MACHINE_STATUS": 2,
+    "POWER_1": 43,
+    "POWER_2": 43,
+    "POWER_3": 43,
+    "POWER_4": 43,
+    "POWER_5": 43,
+    "POWER_6": 43,
+    "SPOT_TIME": 25,
+    "COOL_TIME": 10,
+    "TRAFO_TIME": 25,
+    "MACHINE_SPEED": 70
+  }
+}
