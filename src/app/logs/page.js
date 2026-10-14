@@ -18,11 +18,29 @@ function getOutcomeClass(outcome) {
   return "bg-sky-500/15 text-sky-300 border-sky-500/30";
 }
 
+function formatLogDateTime(value) {
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return '—';
+  return date.toLocaleString('tr-TR', {
+    day: '2-digit',
+    month: '2-digit',
+    year: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
+    second: '2-digit',
+    hour12: false,
+  });
+}
+
 function getLogTitle(log) {
   const payload = log.payload || {};
   const event = payload.event || "log";
-  const orderNo = payload.payload?.p_order_no || payload.details?.criteria?.p_order_no;
-  return orderNo ? `${event} / ${orderNo}` : event;
+  const source = payload.payload || {};
+  const orderNo = source.p_order_no || payload.details?.criteria?.p_order_no;
+  const stationId = source.station_id || payload.details?.station_id;
+  if (orderNo) return `${event} / ${orderNo}`;
+  if (stationId != null) return `${event} / istasyon ${stationId}`;
+  return event;
 }
 
 function getDirectionMeta(direction) {
@@ -91,7 +109,7 @@ export default function LogPage() {
           { label: 'WEX Lab', href: '/simulator' },
           { label: 'Entegrasyon Logları' },
         ]}
-        description="WEX üzerinden gelen paketler ve üretim emri güncelleme sonuçları."
+        description="IoT kutu nabzı (sp_station) ve WEX üretim emri güncellemeleri."
       />
 
       <div className="flex flex-wrap gap-2">
@@ -161,19 +179,22 @@ export default function LogPage() {
                    const payload = log.payload || {};
                    const src = payload.payload || {};
                    const term = searchTerm.toLowerCase();
+                   const stationId = src.station_id ?? payload.details?.station_id;
                    return (
                      (src.p_order_no && src.p_order_no.toString().toLowerCase().includes(term)) ||
-                     (src.station_id && src.station_id.toString().toLowerCase().includes(term))
+                     (stationId != null && String(stationId).toLowerCase().includes(term)) ||
+                     (payload.event && String(payload.event).toLowerCase().includes(term))
                    );
                  })
                  .map((log) => {
                    const payload = log.payload || {};
                    const src = payload.payload || {};
-                   const device = src.station_id ? `İstasyon ${src.station_id}` : "-";
+                   const stationId = src.station_id ?? payload.details?.station_id;
+                   const device = stationId != null ? `İstasyon ${stationId}` : "-";
                    const query = getLogTitle(log);
                    const directionMeta = getDirectionMeta(log.direction);
                    const outcome = payload.outcome || "-";
-                   const time = new Date(log.created_at).toLocaleTimeString('tr-TR', { hour12: false });
+                   const time = formatLogDateTime(log.created_at);
                    const isOpen = openRowId === log.id;
                    return (
                       <Fragment key={log.id}>

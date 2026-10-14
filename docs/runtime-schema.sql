@@ -137,7 +137,9 @@ create index if not exists counter_events_session_idx
 on production.counter_events(session_id, recorded_at desc);
 
 -- -----------------------------------------------------------------------------
--- 4) Duruş olaylari
+-- 4) Duruş olaylari (eski iskelet)
+--    Guncel duraklama semasi: docs/setup-prod-pause-schema.sql
+--    (setup_prod_pause_cat + setup_prod_pause_types + setup_prod_pause)
 -- -----------------------------------------------------------------------------
 create table if not exists production.downtime_events (
   id uuid primary key default gen_random_uuid(),

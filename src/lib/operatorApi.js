@@ -26,11 +26,13 @@ async function operatorFetch(path, body) {
   return payload;
 }
 
-export function postOperatorAction({ action, pOrderId, stationId }) {
+export function postOperatorAction({ action, pOrderId, stationId, pauseTypeId, pauseDetail }) {
   return operatorFetch('/api/operator/action', {
     action,
     p_order_id: pOrderId,
     station_id: stationId,
+    prod_pause_type_id: pauseTypeId ?? null,
+    prod_detail: pauseDetail ?? null,
   });
 }
 

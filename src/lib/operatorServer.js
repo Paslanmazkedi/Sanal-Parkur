@@ -31,7 +31,15 @@ export async function logOperatorAction({ pOrderId, stationId, actionType, fromS
   }
 }
 
-export async function applyStageAction({ action, pOrderId, stationId, actorUserId }) {
+export async function applyStageAction({
+  action,
+  pOrderId,
+  stationId,
+  actorUserId,
+  pauseTypeId = null,
+  pauseDetail = null,
+  clientIp = null,
+}) {
   const config = OPERATOR_ACTIONS[action];
   if (!config) throw new Error('Gecersiz aksiyon.');
 
@@ -40,6 +48,16 @@ export async function applyStageAction({ action, pOrderId, stationId, actorUserI
 
   if (!config.fromStages.includes(currentStage)) {
     throw new Error(`${config.label} aksiyonu mevcut durum (${currentStage}) icin uygun degil.`);
+  }
+
+  if (action === 'pause') {
+    if (currentStage === 3) {
+      throw new Error('Bu emir zaten duraklatildi.');
+    }
+    const typeId = Number(pauseTypeId);
+    if (!Number.isFinite(typeId) || typeId <= 0) {
+      throw new Error('Duraklatmak icin duraklama tipi secin.');
+    }
   }
 
   if (action === 'start') {
@@ -62,6 +80,10 @@ export async function applyStageAction({ action, pOrderId, stationId, actorUserI
     }
   }
 
+  if (action === 'start' && currentStage === 3) {
+    await closeOpenProdPauses({ pOrderId, stationId, updateIp: clientIp });
+  }
+
   const updatePayload = {
     is_stage: config.toStage,
     prod_order_stage: config.toStage,
@@ -79,6 +101,16 @@ export async function applyStageAction({ action, pOrderId, stationId, actorUserI
   if (error) throw new Error(error.message);
   if (!data) throw new Error('Emir guncellenemedi.');
 
+  if (action === 'pause') {
+    await openProdPause({
+      pOrderId,
+      stationId,
+      typeId: Number(pauseTypeId),
+      detail: pauseDetail,
+      recordIp: clientIp,
+    });
+  }
+
   await logOperatorAction({
     pOrderId,
     stationId,
@@ -86,6 +118,10 @@ export async function applyStageAction({ action, pOrderId, stationId, actorUserI
     fromStage: currentStage,
     toStage: config.toStage,
     actorUserId,
+    metadata:
+      action === 'pause'
+        ? { prod_pause_type_id: Number(pauseTypeId), prod_detail: pauseDetail || null }
+        : {},
   });
 
   await supabase.schema('production').from('station_events').insert({
@@ -93,11 +129,93 @@ export async function applyStageAction({ action, pOrderId, stationId, actorUserI
     p_order_id: pOrderId,
     event_type: action === 'pause' ? 'run_stop' : action === 'start' ? 'run_start' : action,
     metadata: { from_stage: currentStage, to_stage: config.toStage },
-  }).then(({ error }) => {
-    if (error) console.error('station_events insert error:', error);
+  }).then(({ error: eventError }) => {
+    if (eventError) console.error('station_events insert error:', eventError);
   });
 
   return data;
+}
+
+async function openProdPause({ pOrderId, stationId, typeId, detail, recordIp }) {
+  const { data: typeRow, error: typeError } = await supabase
+    .schema('production')
+    .from('setup_prod_pause_types')
+    .select('prod_pause_type_id, pause_detail, prod_pause_cat_id, is_active')
+    .eq('prod_pause_type_id', typeId)
+    .maybeSingle();
+
+  if (typeError) throw new Error(typeError.message);
+  if (!typeRow || typeRow.is_active === false) {
+    throw new Error('Duraklama tipi bulunamadi veya pasif.');
+  }
+
+  let isWorkingTime = null;
+  if (typeRow.prod_pause_cat_id != null) {
+    const { data: catRow } = await supabase
+      .schema('production')
+      .from('setup_prod_pause_cat')
+      .select('is_working_time')
+      .eq('prod_pause_cat_id', typeRow.prod_pause_cat_id)
+      .maybeSingle();
+    if (catRow && typeof catRow.is_working_time === 'boolean') {
+      isWorkingTime = catRow.is_working_time;
+    }
+  }
+
+  const now = new Date().toISOString();
+  const note = String(detail || typeRow.pause_detail || '').trim().slice(0, 250) || null;
+
+  const { error } = await supabase.schema('production').from('setup_prod_pause').insert({
+    prod_pause_type_id: typeId,
+    prod_detail: note,
+    is_working_time: isWorkingTime,
+    pr_order_id: null,
+    action_date: now,
+    record_date: now,
+    record_ip: recordIp || null,
+    duration_start_date: now,
+    station_id: stationId,
+    p_order_id: pOrderId,
+    source: 'operator',
+  });
+
+  if (error) throw new Error(error.message);
+}
+
+async function closeOpenProdPauses({ pOrderId, stationId, updateIp }) {
+  const { data: openRows, error: findError } = await supabase
+    .schema('production')
+    .from('setup_prod_pause')
+    .select('prod_pause_id, duration_start_date')
+    .eq('p_order_id', pOrderId)
+    .eq('station_id', stationId)
+    .is('duration_finish_date', null);
+
+  if (findError) throw new Error(findError.message);
+  if (!openRows?.length) return;
+
+  const now = new Date();
+  const nowIso = now.toISOString();
+
+  for (const row of openRows) {
+    const start = new Date(row.duration_start_date).getTime();
+    const prodDuration = Number.isFinite(start)
+      ? Math.max(0, Math.round((now.getTime() - start) / 60000))
+      : null;
+
+    const { error } = await supabase
+      .schema('production')
+      .from('setup_prod_pause')
+      .update({
+        duration_finish_date: nowIso,
+        prod_duration: prodDuration,
+        update_date: nowIso,
+        update_ip: updateIp || null,
+      })
+      .eq('prod_pause_id', row.prod_pause_id);
+
+    if (error) throw new Error(error.message);
+  }
 }
 
 export function normalizeBasketLines(lines = [], basketType) {

@@ -8,10 +8,15 @@ import StationOrderBoard from '@/components/operator/StationOrderBoard';
 import StationRunConsole from '@/components/operator/StationRunConsole';
 import TimeEntryModal from '@/components/operator/TimeEntryModal';
 import FinishOrderModal from '@/components/operator/FinishOrderModal';
+import PauseReasonModal from '@/components/operator/PauseReasonModal';
 import { pickActiveOrder } from '@/lib/oee';
 import { postOperatorAction } from '@/lib/operatorApi';
+import { getMachineStatusLabel } from '@/lib/iotStation';
 import { useOperatorKiosk } from '@/hooks/useOperatorKiosk';
 import { supabase } from '../supabase';
+
+const IOT_SELECT =
+  'station_id,overall_count,machine_status,plc_p_order_id,queue_p_order_id,queue_quantity,read_at,payload,updated_at';
 
 const POLL_MS = 8000;
 const ORDER_SELECT =
@@ -67,6 +72,8 @@ function StationOperatorContent() {
   const [now, setNow] = useState(() => new Date());
   const [timeModalOpen, setTimeModalOpen] = useState(false);
   const [finishModalOpen, setFinishModalOpen] = useState(false);
+  const [pauseModalOpen, setPauseModalOpen] = useState(false);
+  const [iotLive, setIotLive] = useState(null);
 
   useEffect(() => {
     const urlStation = searchParams.get('station') || searchParams.get('station_id') || '';
@@ -131,6 +138,29 @@ function StationOperatorContent() {
     setLoading(false);
   }, [stationId]);
 
+  const loadIotLive = useCallback(async () => {
+    if (!stationId) {
+      setIotLive(null);
+      return;
+    }
+
+    const { data, error: iotError } = await supabase
+      .from('sp_station')
+      .select(IOT_SELECT)
+      .eq('station_id', Number(stationId))
+      .maybeSingle();
+
+    if (iotError) {
+      if (!String(iotError.message || '').includes('sp_station')) {
+        setError(iotError.message);
+      }
+      setIotLive(null);
+      return;
+    }
+
+    setIotLive(data || null);
+  }, [stationId]);
+
   const showConsole = Boolean(stationId && runOrderId);
 
   useEffect(() => {
@@ -140,6 +170,17 @@ function StationOperatorContent() {
     const poll = setInterval(() => loadListOrders(), POLL_MS);
     return () => clearInterval(poll);
   }, [showConsole, loadListOrders]);
+
+  useEffect(() => {
+    if (!stationId) {
+      setIotLive(null);
+      return undefined;
+    }
+
+    loadIotLive();
+    const poll = setInterval(loadIotLive, POLL_MS);
+    return () => clearInterval(poll);
+  }, [stationId, loadIotLive]);
 
   useEffect(() => {
     if (!showConsole) return undefined;
@@ -234,6 +275,11 @@ function StationOperatorContent() {
       return;
     }
 
+    if (action === 'pause') {
+      setPauseModalOpen(true);
+      return;
+    }
+
     setBusy(true);
     setSuccessMsg('');
     setError('');
@@ -245,6 +291,49 @@ function StationOperatorContent() {
         stationId: Number(stationId),
       });
       setSuccessMsg(`${action} işlemi kaydedildi.`);
+      await loadStationOrders();
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const handlePauseConfirm = async ({ typeId, detail }) => {
+    if (!selectedOrder || !stationId) return;
+    setBusy(true);
+    setSuccessMsg('');
+    setError('');
+    try {
+      await postOperatorAction({
+        action: 'pause',
+        pOrderId: selectedOrder.p_order_id,
+        stationId: Number(stationId),
+        pauseTypeId: typeId,
+        pauseDetail: detail,
+      });
+      setSuccessMsg('Duraklama başladı.');
+      await loadStationOrders();
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const handlePauseEnd = async () => {
+    if (!selectedOrder || !stationId) return;
+    setBusy(true);
+    setSuccessMsg('');
+    setError('');
+    try {
+      await postOperatorAction({
+        action: 'start',
+        pOrderId: selectedOrder.p_order_id,
+        stationId: Number(stationId),
+      });
+      setPauseModalOpen(false);
+      setSuccessMsg('Duraklama bitti, süre kaydedildi.');
       await loadStationOrders();
     } catch (err) {
       setError(err.message);
@@ -304,6 +393,26 @@ function StationOperatorContent() {
         </div>
       )}
 
+      {!showConsole && stationId ? (
+        <div className="mb-2 shrink-0 rounded-xl border border-cyan-500/25 bg-slate-950/60 px-3 py-2 text-xs text-slate-300">
+          {iotLive ? (
+            <p>
+              IoT kutu · {getMachineStatusLabel(iotLive.machine_status)} · sayaç{' '}
+              <span className="font-mono font-semibold text-white">
+                {iotLive.overall_count == null ? '—' : Number(iotLive.overall_count).toLocaleString('tr-TR')}
+              </span>
+              {iotLive.read_at || iotLive.updated_at
+                ? ` · ${new Date(iotLive.read_at || iotLive.updated_at).toLocaleString('tr-TR')}`
+                : ''}
+            </p>
+          ) : (
+            <p className="text-slate-500">
+              Bu istasyon için henüz IoT paketi yok. Postman: POST /api/iot, aynı station_id.
+            </p>
+          )}
+        </div>
+      ) : null}
+
       <div className="min-h-0 flex-1 overflow-hidden">
         {showConsole ? (
           <StationRunConsole
@@ -324,6 +433,7 @@ function StationOperatorContent() {
             activeOrders={activeOrders}
             queueOrders={queueOrders}
             onSelectOrder={setSelectedOrderId}
+            iotLive={iotLive}
           />
         ) : (
           <StationOrderBoard
@@ -342,6 +452,16 @@ function StationOperatorContent() {
         stationId={Number(stationId)}
         operators={operators}
         onSuccess={() => handleMutationSuccess('Zaman harcaması kaydedildi.')}
+      />
+
+      <PauseReasonModal
+        open={pauseModalOpen}
+        onClose={() => setPauseModalOpen(false)}
+        order={selectedOrder}
+        stationId={Number(stationId)}
+        submitting={busy}
+        onStartPause={handlePauseConfirm}
+        onEndPause={handlePauseEnd}
       />
 
       <FinishOrderModal

@@ -8,6 +8,8 @@ import BrandLogo from './BrandLogo';
 import { useSidebar } from '@/hooks/useSidebar';
 import {
   HOME_LABEL,
+  PARAMETER_LINKS,
+  PARAMETER_SECTION_LABEL,
   PRODUCTION_LINKS,
   REPORTS_LINKS,
   REPORTS_SECTION_LABEL,
@@ -30,6 +32,7 @@ export default function Sidebar({ user }) {
   const [serviceOpen, setServiceOpen] = useState(false);
   const [qualityOpen, setQualityOpen] = useState(false);
   const [wexLabOpen, setWexLabOpen] = useState(false);
+  const [parametersOpen, setParametersOpen] = useState(false);
 
   const displayName = profileName || currentUser?.email || 'Kullanıcı';
 
@@ -214,6 +217,24 @@ export default function Sidebar({ user }) {
                       {link.label}
                     </NavLink>
                   ))}
+
+                  <div className="pt-1">
+                    <GroupButton
+                      label={PARAMETER_SECTION_LABEL}
+                      isOpen={parametersOpen}
+                      onToggle={() => setParametersOpen((value) => !value)}
+                      nested
+                    />
+                    {parametersOpen && (
+                      <div className="space-y-1 pl-2">
+                        {PARAMETER_LINKS.map((link) => (
+                          <NavLink key={link.href} href={link.href} nested>
+                            {link.label}
+                          </NavLink>
+                        ))}
+                      </div>
+                    )}
+                  </div>
 
                   <div className="pt-1">
                     <GroupButton

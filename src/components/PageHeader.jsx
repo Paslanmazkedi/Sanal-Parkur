@@ -59,7 +59,7 @@ export default function PageHeader({
       </div>
 
       {actions ? (
-        <div className="flex shrink-0 items-center gap-2 pt-1">{actions}</div>
+        <div className="flex w-full shrink-0 items-center gap-2 pt-1 sm:w-auto sm:pt-1">{actions}</div>
       ) : null}
     </header>
   );

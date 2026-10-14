@@ -30,6 +30,12 @@ export const PRODUCTION_LINKS = [
   { href: '/iot-entegrasyon/istasyonlar', label: 'İstasyonlar' },
 ];
 
+export const PARAMETER_SECTION_LABEL = 'Parametreler';
+
+export const PARAMETER_LINKS = [
+  { href: '/iot-entegrasyon/duraklama-tanimlari', label: 'Duraklama Tanımları' },
+];
+
 export const REPORTS_LINKS = [
   { href: '/oee', label: 'OEE' },
   { href: '/duraklamalar', label: 'Duraklamalar' },
@@ -58,8 +64,11 @@ export const LEGACY_PRODUCTION_PATHS = [
   '/assets',
 ];
 
+export const PARAMETER_PATHS = PARAMETER_LINKS.map((item) => item.href);
+
 export const PRODUCTION_PATHS = [
   ...PRODUCTION_LINKS.map((item) => item.href),
+  ...PARAMETER_PATHS,
   ...WEX_LAB_PATHS,
   ...LEGACY_PRODUCTION_PATHS,
 ];
@@ -83,6 +92,7 @@ export const PAGE_TITLES = {
   '/station': 'Operatör Paneli',
   '/iot-entegrasyon/uretim-emirleri': 'Üretim Emirleri',
   '/iot-entegrasyon/istasyonlar': 'İstasyonlar',
+  '/iot-entegrasyon/duraklama-tanimlari': 'Duraklama Tanımları',
   '/oee': 'OEE',
   '/duraklamalar': 'Duraklamalar',
   '/assets': 'İstasyonlar',
@@ -103,6 +113,7 @@ export const PAGE_TITLES = {
 
 export const MORE_MENU_SECTIONS = [
   { title: 'Üretim', links: PRODUCTION_LINKS },
+  { title: PARAMETER_SECTION_LABEL, links: PARAMETER_LINKS },
   { title: WEX_LAB_SECTION_LABEL, links: WEX_LAB_LINKS },
   { title: REPORTS_SECTION_LABEL, links: REPORTS_LINKS },
 ];

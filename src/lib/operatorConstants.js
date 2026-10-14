@@ -1,7 +1,7 @@
 export const OPERATOR_ACTIONS = {
   control: { label: 'Kontrol', toStage: 0, fromStages: [4] },
   start: { label: 'Başlat', toStage: 1, fromStages: [0, 3, 4] },
-  pause: { label: 'Duraklat', toStage: 3, fromStages: [1] },
+  pause: { label: 'Duraklat', toStage: 3, fromStages: [1, 3] },
   finish: { label: 'Sonuç gir', toStage: 2, fromStages: [0, 1, 3] },
 };
 

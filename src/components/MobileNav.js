@@ -5,6 +5,8 @@ import { usePathname } from 'next/navigation';
 import { useState } from 'react';
 import {
   MOBILE_TABS,
+  PARAMETER_LINKS,
+  PARAMETER_SECTION_LABEL,
   PRODUCTION_LINKS,
   REPORTS_LINKS,
   REPORTS_SECTION_LABEL,
@@ -117,6 +119,26 @@ export default function MobileNav() {
             {productionOpen ? (
               <>
                 <SheetLinks title="Üretim" links={PRODUCTION_LINKS} pathname={pathname} onClose={closeSheets} />
+                <p className="mb-2 mt-4 text-[11px] font-semibold uppercase tracking-wider text-slate-500">
+                  {PARAMETER_SECTION_LABEL}
+                </p>
+                <div className="space-y-1">
+                  {PARAMETER_LINKS.map((link) => {
+                    const active = isExactOrNestedPath(pathname, link.href);
+                    return (
+                      <Link
+                        key={link.href}
+                        href={link.href}
+                        onClick={closeSheets}
+                        className={`block rounded-xl px-3 py-3 text-sm font-medium ${
+                          active ? 'bg-emerald-700 text-white' : 'text-slate-300 hover:bg-slate-800'
+                        }`}
+                      >
+                        {link.label}
+                      </Link>
+                    );
+                  })}
+                </div>
                 <p className="mb-2 mt-4 text-[11px] font-semibold uppercase tracking-wider text-violet-400/80">
                   {WEX_LAB_SECTION_LABEL}
                 </p>

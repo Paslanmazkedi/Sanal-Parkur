@@ -1,7 +1,9 @@
 'use client';
 
+import { useState } from 'react';
 import { OPERATOR_ACTIONS, getActionDisabledReason } from '@/lib/operatorConstants';
 import { getStageMeta } from '@/lib/stationStages';
+import { getMachineStatusLabel, livePayloadRows } from '@/lib/iotStation';
 
 const actionStyles = {
   control: 'border-sky-500/40 bg-sky-500/10 text-sky-200',
@@ -52,13 +54,23 @@ export default function StationRunConsole({
   activeOrders,
   queueOrders,
   onSelectOrder,
+  iotLive,
 }) {
+  const [showOtherOrders, setShowOtherOrders] = useState(false);
+  const [showProcess, setShowProcess] = useState(false);
+
   const currentStage = selectedOrder ? Number(selectedOrder.is_stage) : null;
   const stageMeta = selectedOrder ? getStageMeta(selectedOrder.is_stage) : null;
   const target = Number(selectedOrder?.quantity) || 0;
-  const actual = Number(selectedOrder?.counter_value) || 0;
-  const progress = target > 0 ? Math.min(100, (actual / target) * 100) : 0;
+  const orderCount = Number(selectedOrder?.counter_value) || 0;
+  const iotCount = iotLive?.overall_count;
+  const remaining = target > 0 ? Math.max(0, target - orderCount) : null;
+  const progress = target > 0 ? Math.min(100, (orderCount / target) * 100) : 0;
   const allOrders = [...activeOrders, ...queueOrders];
+  const processRows = livePayloadRows(iotLive?.payload);
+  const machineStatus = iotLive?.machine_status;
+  const statusLabel = getMachineStatusLabel(machineStatus);
+  const iotFresh = Boolean(iotLive?.read_at || iotLive?.updated_at);
 
   const actionClass =
     'min-h-11 flex-1 rounded-xl border px-1.5 text-[12px] font-semibold leading-tight transition-colors sm:text-sm disabled:cursor-not-allowed disabled:opacity-35';
@@ -106,29 +118,99 @@ export default function StationRunConsole({
                 <div className="h-full rounded-full bg-emerald-500" style={{ width: `${progress}%` }} />
               </div>
               <p className="shrink-0 font-mono text-[11px] tabular-nums text-slate-400">
-                {actual} / {target || '—'}
+                {orderCount} / {target || '—'}
+                {remaining !== null ? ` · kalan ${remaining}` : ''}
               </p>
             </div>
           </>
         ) : null}
       </div>
 
-      <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain rounded-2xl border border-slate-800 bg-slate-900/40 p-2">
-        {allOrders.length === 0 ? (
-          <p className="py-8 text-center text-sm text-slate-500">Bu hatta açık emir yok.</p>
-        ) : (
-          <div className="space-y-1.5">
-            {allOrders.map((order) => (
-              <OrderPickRow
-                key={order.p_order_id}
-                order={order}
-                selected={selectedOrder?.p_order_id === order.p_order_id}
-                onSelect={(o) => onSelectOrder(o.p_order_id)}
-              />
-            ))}
+      <div className="shrink-0 rounded-2xl border border-cyan-500/25 bg-slate-950/70 px-3 py-2">
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          <p className="text-[10px] font-semibold uppercase tracking-wider text-cyan-400/90">IoT kutu</p>
+          <span
+            className={`rounded-md border px-1.5 py-0.5 text-[10px] font-semibold ${
+              Number(machineStatus) === 2
+                ? 'border-emerald-500/40 bg-emerald-500/10 text-emerald-300'
+                : Number(machineStatus) === 1
+                  ? 'border-amber-500/40 bg-amber-500/10 text-amber-300'
+                  : 'border-slate-600 bg-slate-800 text-slate-300'
+            }`}
+          >
+            {statusLabel}
+          </span>
+        </div>
+        <div className="mt-2 grid grid-cols-2 gap-2 sm:grid-cols-3">
+          <div className="rounded-lg border border-slate-800 px-2 py-1.5">
+            <p className="text-[10px] text-slate-500">Kutu sayaç</p>
+            <p className="font-mono text-lg font-bold tabular-nums text-white">
+              {iotCount == null ? '—' : Number(iotCount).toLocaleString('tr-TR')}
+            </p>
           </div>
-        )}
+          <div className="rounded-lg border border-slate-800 px-2 py-1.5">
+            <p className="text-[10px] text-slate-500">Kuyruk adet</p>
+            <p className="font-mono text-sm font-semibold text-slate-200">{iotLive?.queue_quantity ?? '—'}</p>
+          </div>
+          <div className="rounded-lg border border-slate-800 px-2 py-1.5">
+            <p className="text-[10px] text-slate-500">Son paket</p>
+            <p className="font-mono text-[11px] text-slate-300">
+              {iotFresh ? new Date(iotLive.read_at || iotLive.updated_at).toLocaleTimeString('tr-TR') : 'Yok'}
+            </p>
+          </div>
+        </div>
+        <div className="mt-2 flex gap-1.5">
+          <button
+            type="button"
+            onClick={() => setShowProcess((open) => !open)}
+            className="min-h-9 flex-1 rounded-lg border border-slate-700 text-[11px] font-semibold text-slate-300 hover:border-cyan-500/40"
+          >
+            {showProcess ? 'Güç / süre gizle' : 'Güç / süre'}
+          </button>
+          <button
+            type="button"
+            onClick={() => setShowOtherOrders((open) => !open)}
+            className="min-h-9 flex-1 rounded-lg border border-slate-700 text-[11px] font-semibold text-slate-300 hover:border-cyan-500/40"
+          >
+            {showOtherOrders ? 'Emir listesini gizle' : `Diğer emirler (${allOrders.length})`}
+          </button>
+        </div>
+        {showProcess ? (
+          <div className="mt-2 grid grid-cols-2 gap-1.5 sm:grid-cols-5">
+            {processRows.length === 0 ? (
+              <p className="col-span-2 text-[11px] text-slate-500 sm:col-span-5">Payload henüz yok.</p>
+            ) : (
+              processRows.map((row) => (
+                <div key={row.key} className="rounded-md border border-slate-800 px-2 py-1">
+                  <p className="truncate text-[9px] text-slate-500">{row.key}</p>
+                  <p className="font-mono text-xs text-slate-200">{row.value}</p>
+                </div>
+              ))
+            )}
+          </div>
+        ) : null}
       </div>
+
+      {showOtherOrders || !selectedOrder ? (
+        <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain rounded-2xl border border-slate-800 bg-slate-900/40 p-2">
+          {allOrders.length === 0 ? (
+            <p className="py-8 text-center text-sm text-slate-500">Bu hatta açık emir yok.</p>
+          ) : (
+            <div className="space-y-1.5">
+              {allOrders.map((order) => (
+                <OrderPickRow
+                  key={order.p_order_id}
+                  order={order}
+                  selected={selectedOrder?.p_order_id === order.p_order_id}
+                  onSelect={(o) => onSelectOrder(o.p_order_id)}
+                />
+              ))}
+            </div>
+          )}
+        </div>
+      ) : (
+        <div className="min-h-0 flex-1" />
+      )}
 
       <div className="shrink-0 rounded-2xl border border-slate-800 bg-slate-950/80 p-2">
         <div className="grid grid-cols-4 gap-1.5 sm:flex sm:gap-2">
