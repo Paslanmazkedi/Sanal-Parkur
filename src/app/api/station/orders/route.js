@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { serverSupabase as supabase } from '@/lib/serverSupabase';
 import { authenticateProductionDevice, getClientIp } from '@/lib/productionDeviceAuth';
-import { calculateOee, pickActiveOrder } from '@/lib/oee';
+import { calculateOee, liveProducedQty, pickActiveOrder } from '@/lib/oee';
 
 function parseStationId(value) {
   if (value === null || value === undefined || value === '') return null;
@@ -76,10 +76,21 @@ export async function GET(request) {
     machine = machineData ?? null;
   }
 
+  const { data: iotLive } = await supabase
+    .schema('production')
+    .from('sp_station')
+    .select('station_id,counter_value,machine_status')
+    .eq('station_id', stationId)
+    .maybeSingle();
+
   const activeOrders = (orders ?? []).filter((o) => [0, 1, 3].includes(Number(o.is_stage)));
   const queueOrders = (orders ?? []).filter((o) => Number(o.is_stage) === 4);
   const currentOrder = pickActiveOrder(orders ?? []);
-  const metrics = calculateOee({ activeOrder: currentOrder });
+  const metrics = calculateOee({
+    activeOrder: currentOrder
+      ? { ...currentOrder, counter_value: liveProducedQty(currentOrder, iotLive) }
+      : currentOrder,
+  });
 
   return NextResponse.json({
     success: true,

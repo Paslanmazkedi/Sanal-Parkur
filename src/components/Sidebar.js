@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { useRouter, usePathname } from 'next/navigation';
+import { useRouter, usePathname, useSearchParams } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { supabase } from '../supabase';
 import BrandLogo from './BrandLogo';
@@ -14,14 +14,14 @@ import {
   REPORTS_LINKS,
   REPORTS_SECTION_LABEL,
   SECTION_HREFS,
-  WEX_LAB_LINKS,
-  WEX_LAB_SECTION_LABEL,
   isExactOrNestedPath,
+  isNavHrefActive,
 } from '../lib/navigation';
 
 export default function Sidebar({ user }) {
   const router = useRouter();
   const pathname = usePathname();
+  const searchParams = useSearchParams();
   const { open, close } = useSidebar();
 
   const [profileName, setProfileName] = useState('');
@@ -29,9 +29,6 @@ export default function Sidebar({ user }) {
 
   const [productionOpen, setProductionOpen] = useState(false);
   const [reportsOpen, setReportsOpen] = useState(false);
-  const [serviceOpen, setServiceOpen] = useState(false);
-  const [qualityOpen, setQualityOpen] = useState(false);
-  const [wexLabOpen, setWexLabOpen] = useState(false);
   const [parametersOpen, setParametersOpen] = useState(false);
 
   const displayName = profileName || currentUser?.email || 'Kullanıcı';
@@ -110,9 +107,7 @@ export default function Sidebar({ user }) {
   };
 
   const TopNavLink = ({ href, children }) => {
-    const isActive = href === SECTION_HREFS.general
-      ? pathname === '/'
-      : isExactOrNestedPath(pathname, href);
+    const isActive = isNavHrefActive(pathname, href, searchParams);
 
     return (
       <Link
@@ -129,24 +124,12 @@ export default function Sidebar({ user }) {
     );
   };
 
-  const GroupButton = ({ label, isOpen, onToggle, nested = false, tone = 'default' }) => {
-    const labelClass =
-      tone === 'violet'
-        ? 'text-[11px] text-violet-400 group-hover:text-violet-300'
-        : nested
-          ? 'text-[11px] text-slate-400'
-          : 'text-xs text-slate-300';
+  const GroupButton = ({ label, isOpen, onToggle, nested = false }) => {
+    const labelClass = nested ? 'text-[11px] text-slate-400' : 'text-xs text-slate-300';
 
-    const chevronClass =
-      tone === 'violet'
-        ? isOpen
-          ? 'rotate-90 text-violet-400'
-          : 'text-violet-500/70'
-        : isOpen
-          ? 'rotate-90 text-emerald-400'
-          : 'text-slate-500';
+    const chevronClass = isOpen ? 'rotate-90 text-emerald-400' : 'text-slate-500';
 
-    const hoverClass = tone === 'violet' ? 'hover:bg-violet-950/20' : 'hover:bg-slate-800';
+    const hoverClass = 'hover:bg-slate-800';
 
     return (
       <button
@@ -235,56 +218,12 @@ export default function Sidebar({ user }) {
                       </div>
                     )}
                   </div>
-
-                  <div className="pt-1">
-                    <GroupButton
-                      label={WEX_LAB_SECTION_LABEL}
-                      isOpen={wexLabOpen}
-                      onToggle={() => setWexLabOpen((value) => !value)}
-                      nested
-                      tone="violet"
-                    />
-                    {wexLabOpen && (
-                      <div className="space-y-1 pl-2">
-                        {WEX_LAB_LINKS.map((link) => (
-                          <NavLink key={link.href} href={link.href} nested>
-                            {link.label}
-                          </NavLink>
-                        ))}
-                      </div>
-                    )}
-                  </div>
                 </div>
               )}
             </div>
 
-            <div>
-              <GroupButton
-                label="Kalite"
-                isOpen={qualityOpen}
-                onToggle={() => setQualityOpen((value) => !value)}
-              />
-              {qualityOpen && (
-                <div className="space-y-1 pl-2">
-                  <NavLink href={SECTION_HREFS.quality}>Kalite Özeti</NavLink>
-                  <p className="px-4 py-2 text-[12px] italic text-slate-500">Modül genişletiliyor...</p>
-                </div>
-              )}
-            </div>
-
-            <div>
-              <GroupButton
-                label="Servis"
-                isOpen={serviceOpen}
-                onToggle={() => setServiceOpen((value) => !value)}
-              />
-              {serviceOpen && (
-                <div className="space-y-1 pl-2">
-                  <NavLink href={SECTION_HREFS.service}>Servis Özeti</NavLink>
-                  <p className="px-4 py-2 text-[12px] italic text-slate-500">Modül genişletiliyor...</p>
-                </div>
-              )}
-            </div>
+            <TopNavLink href={SECTION_HREFS.quality}>Kalite</TopNavLink>
+            <TopNavLink href={SECTION_HREFS.service}>Servis</TopNavLink>
 
             <div>
               <GroupButton

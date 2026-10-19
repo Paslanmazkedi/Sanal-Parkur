@@ -49,7 +49,7 @@ export default function AuthGuard({ children }) {
 
   if (loading || (!user && !isLoginPage) || (user && isLoginPage)) {
     return (
-      <div className="grid min-h-screen w-full place-items-center bg-slate-950 text-slate-100">
+      <div className="grid min-h-screen w-full place-items-center bg-background text-foreground">
         <div className="text-sm font-mono text-slate-400">Oturum kontrol ediliyor...</div>
       </div>
     );

@@ -143,7 +143,7 @@ export default function Navbar() {
           <BrandLogo size="sm" showTagline={false} href="/" />
         </div>
 
-        <LiveClock className="text-[13px] text-slate-300 sm:text-sm" />
+        <LiveClock />
 
         <div className="flex min-w-0 max-w-[55%] shrink-0 items-center gap-2 lg:hidden">
           <p className="min-w-0 truncate text-right text-xs font-medium text-slate-200" title={displayName}>

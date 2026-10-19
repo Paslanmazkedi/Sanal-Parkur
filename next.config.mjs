@@ -7,6 +7,9 @@ const nextConfig = {
       { source: '/iot-entegrasyon', destination: '/iot-entegrasyon/uretim-emirleri', permanent: false },
       { source: '/iot-entegrasyon/operator-paneli', destination: '/station', permanent: false },
       { source: '/iot-entegrasyon/loglar', destination: '/logs', permanent: false },
+      { source: '/assets', destination: '/iot-entegrasyon/istasyonlar', permanent: false },
+      { source: '/simulator', destination: '/logs', permanent: false },
+      { source: '/iot-gateway', destination: '/logs', permanent: false },
     ];
   },
 };

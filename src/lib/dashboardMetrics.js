@@ -1,4 +1,4 @@
-import { summarizeStations } from '@/lib/oee';
+import { indexIotByStation, liveProducedQty, summarizeStations } from '@/lib/oee';
 
 export async function loadDashboardSnapshot(supabase) {
   const [
@@ -9,6 +9,7 @@ export async function loadDashboardSnapshot(supabase) {
     operationsRes,
     finishLinesRes,
     timeEntriesRes,
+    iotRes,
   ] = await Promise.all([
     supabase
       .from('production_orders')
@@ -41,6 +42,7 @@ export async function loadDashboardSnapshot(supabase) {
       .select('id,entry_date,created_at,order_time_entry_lines(minutes_spent)')
       .order('created_at', { ascending: false })
       .limit(20),
+    supabase.schema('production').from('sp_station').select('station_id,counter_value,machine_status'),
   ]);
 
   const orders = ordersRes.data || [];
@@ -50,6 +52,7 @@ export async function loadDashboardSnapshot(supabase) {
   const operations = operationsRes.error ? [] : operationsRes.data || [];
   const scrapLines = finishLinesRes.error ? [] : finishLinesRes.data || [];
   const timeEntries = timeEntriesRes.error ? [] : timeEntriesRes.data || [];
+  const iotRows = iotRes.error ? [] : iotRes.data || [];
 
   const runningOrders = orders.filter((o) => Number(o.is_stage) === 1);
   const controlOrders = orders.filter((o) => Number(o.is_stage) === 0);
@@ -61,6 +64,7 @@ export async function loadDashboardSnapshot(supabase) {
   const stationSummaries = summarizeStations(
     workstations.filter((ws) => ws.active !== 0),
     orders.filter((o) => [0, 1, 3, 4].includes(Number(o.is_stage))),
+    iotRows,
   );
 
   const avgOee = stationSummaries.length
@@ -73,7 +77,14 @@ export async function loadDashboardSnapshot(supabase) {
   const downtimeStations = new Set(
     faultOrders.map((order) => Number(order.station_id)).filter((id) => Number.isFinite(id)),
   ).size;
-  const producedQty = orders.reduce((sum, order) => sum + (Number(order.counter_value) || 0), 0);
+  const iotByStation = indexIotByStation(iotRows);
+  const producedQty = orders.reduce((sum, order) => {
+    const stage = Number(order.is_stage);
+    if ([1, 3].includes(stage)) {
+      return sum + liveProducedQty(order, iotByStation.get(Number(order.station_id)));
+    }
+    return sum + (Number(order.counter_value) || 0);
+  }, 0);
   const targetQty = orders.reduce((sum, order) => sum + (Number(order.quantity) || 0), 0);
   const scrapTotal = scrapLines.reduce((sum, line) => sum + (Number(line.quantity) || 0), 0);
 

@@ -51,13 +51,13 @@ export default function MaintenanceTab({ workcube, snapshot, loading }) {
       </div>
 
       <div className="grid gap-5 xl:grid-cols-2">
-        <SectionCard title="Bakım planı" action={<DetailLink href="/servis" />}>
+        <SectionCard title="Bakım planı">
           {loading ? (
             <EmptyBlock message="Bakım verileri yükleniyor..." />
           ) : maintenanceItems.length === 0 ? (
             <EmptyBlock message="Planlı bakım veya açık arıza kaydı yok." />
           ) : (
-            <ul className="divide-y divide-slate-800/80">
+            <ul className="divide-y divide-slate-800">
               {maintenanceItems.map((item) => (
                 <li key={item.id} className="flex items-center justify-between gap-3 py-3 first:pt-0 last:pb-0">
                   <div className="min-w-0">

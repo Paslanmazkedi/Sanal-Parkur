@@ -3,7 +3,7 @@
 import Link from 'next/link';
 
 export function KpiCard({ label, value, hint, tone = 'text-white', loading = false, className = '', href }) {
-  const cardClass = `rounded-xl border border-slate-800 bg-slate-900/60 px-4 py-4 ${
+  const cardClass = `rounded-xl border border-slate-700 bg-slate-900 px-4 py-4 ${
     href ? 'transition-colors hover:border-emerald-500/35 hover:bg-slate-900' : ''
   } ${className}`;
 
@@ -30,7 +30,7 @@ export function KpiCard({ label, value, hint, tone = 'text-white', loading = fal
 
 export function SectionCard({ title, action, children, className = '' }) {
   return (
-    <section className={`overflow-hidden rounded-xl border border-slate-800 bg-slate-900/50 ${className}`}>
+    <section className={`overflow-hidden rounded-xl border border-slate-700 bg-slate-900 ${className}`}>
       <div className="flex items-center justify-between gap-3 border-b border-slate-800/90 px-4 py-3 sm:px-5">
         <h3 className="text-sm font-bold text-white">{title}</h3>
         {action}

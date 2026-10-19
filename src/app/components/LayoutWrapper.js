@@ -11,7 +11,7 @@ import { SidebarProvider } from '@/hooks/useSidebar';
 
 function AuthLoadingScreen() {
   return (
-    <div className="grid min-h-screen w-full place-items-center bg-slate-950 text-slate-100">
+    <div className="grid min-h-screen w-full place-items-center bg-background text-foreground">
       <div className="text-sm font-mono text-slate-400">Oturum kontrol ediliyor...</div>
     </div>
   );
@@ -25,7 +25,7 @@ function AppShell({ user, children }) {
 
   if (kiosk) {
     return (
-      <div className="flex h-dvh min-h-0 min-w-0 flex-col overflow-hidden bg-slate-950 text-slate-100">
+      <div className="flex h-dvh min-h-0 min-w-0 flex-col overflow-hidden bg-background text-foreground">
         <main className="flex min-h-0 flex-1 flex-col overflow-hidden p-3 sm:p-4">
           <div className="flex h-full min-h-0 w-full min-w-0 flex-col">{children}</div>
         </main>
@@ -36,7 +36,7 @@ function AppShell({ user, children }) {
   if (isStationPage) {
     return (
       <SidebarProvider>
-        <div className="h-dvh min-h-0 min-w-0 overflow-hidden bg-slate-950 text-slate-100">
+        <div className="h-dvh min-h-0 min-w-0 overflow-hidden bg-background text-foreground">
           <Sidebar user={user} />
 
           <div className="flex h-dvh min-h-0 w-full min-w-0 flex-col overflow-hidden">
@@ -54,7 +54,7 @@ function AppShell({ user, children }) {
 
   return (
     <SidebarProvider>
-      <div className="min-h-screen min-w-0 overflow-x-hidden bg-slate-950 text-slate-100">
+      <div className="min-h-screen min-w-0 overflow-x-hidden bg-background text-foreground">
         <Sidebar user={user} />
 
         <div className="flex min-h-screen w-full min-w-0 flex-col">

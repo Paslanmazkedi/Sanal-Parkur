@@ -14,7 +14,7 @@ export const metadata = {
   formatDetection: {
     telephone: false,
   },
-  themeColor: '#0A0A0A',
+  themeColor: '#0C0E10',
   icons: {
     icon: [
       { url: '/icons/icon-192.png', sizes: '192x192', type: 'image/png' },
@@ -29,10 +29,10 @@ export const metadata = {
 export default function RootLayout({ children }) {
   return (
     <html lang="tr">
-      <body className="min-h-screen max-w-[100vw] overflow-x-hidden bg-gray-50">
+      <body className="min-h-screen max-w-[100vw] overflow-x-hidden bg-background">
         <Suspense
           fallback={
-            <div className="grid min-h-screen place-items-center bg-slate-950 text-slate-400 text-sm font-mono">
+            <div className="grid min-h-screen place-items-center bg-background text-slate-400 text-sm font-mono">
               Yükleniyor...
             </div>
           }

@@ -2,8 +2,21 @@
 
 import { useEffect, useState } from 'react';
 
-function formatClock(date) {
-  return date.toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+function formatDate(date) {
+  return date.toLocaleDateString('tr-TR', {
+    day: '2-digit',
+    month: '2-digit',
+    year: 'numeric',
+  });
+}
+
+function formatTime(date) {
+  return date.toLocaleTimeString('tr-TR', {
+    hour: '2-digit',
+    minute: '2-digit',
+    second: '2-digit',
+    hour12: false,
+  });
 }
 
 export default function LiveClock({ className = '' }) {
@@ -17,10 +30,15 @@ export default function LiveClock({ className = '' }) {
   return (
     <time
       dateTime={now.toISOString()}
-      className={`shrink-0 font-mono text-sm font-semibold tabular-nums text-slate-200 ${className}`.trim()}
-      aria-label="Saat"
+      className={`shrink-0 text-right font-mono ${className}`.trim()}
+      aria-label={`${formatDate(now)} ${formatTime(now)}`}
     >
-      {formatClock(now)}
+      <span className="block text-[10px] font-medium leading-tight text-slate-500 sm:text-xs">
+        {formatDate(now)}
+      </span>
+      <span className="block text-xs font-semibold tabular-nums leading-tight text-slate-200 sm:text-sm">
+        {formatTime(now)}
+      </span>
     </time>
   );
 }

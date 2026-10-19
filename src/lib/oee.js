@@ -28,6 +28,29 @@ export function calculateAvailability(activeOrder) {
   }
 }
 
+export function indexIotByStation(rows = []) {
+  const map = new Map();
+  rows.forEach((row) => {
+    const stationId = Number(row?.station_id);
+    if (Number.isFinite(stationId)) map.set(stationId, row);
+  });
+  return map;
+}
+
+export function liveProducedQty(order, iotLive) {
+  const live = Number(iotLive?.counter_value);
+  if (Number.isFinite(live)) return live;
+  return Number(order?.counter_value) || 0;
+}
+
+function orderWithLiveCount(order, iotByStation) {
+  if (!order) return order;
+  const iotLive = iotByStation.get(Number(order.station_id));
+  const live = Number(iotLive?.counter_value);
+  if (!Number.isFinite(live)) return order;
+  return { ...order, counter_value: live };
+}
+
 export function calculatePerformance(activeOrder) {
   if (!activeOrder) return 0;
 
@@ -93,12 +116,14 @@ export function pickActiveOrder(orders = []) {
   return null;
 }
 
-export function summarizeStations(workstations = [], orders = []) {
+export function summarizeStations(workstations = [], orders = [], iotRows = []) {
+  const iotByStation = indexIotByStation(iotRows);
+
   return workstations.map((station) => {
     const stationOrders = orders.filter(
       (order) => Number(order.station_id) === Number(station.station_id),
     );
-    const activeOrder = pickActiveOrder(stationOrders);
+    const activeOrder = orderWithLiveCount(pickActiveOrder(stationOrders), iotByStation);
     const queueCount = stationOrders.filter((o) => Number(o.is_stage) === 4).length;
     const orderCount = stationOrders.length;
     const metrics = calculateOee({ activeOrder });

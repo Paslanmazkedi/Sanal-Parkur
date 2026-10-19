@@ -1,40 +1,35 @@
 'use client';
 
-import Link from 'next/link';
 import { ModuleIcon } from '@/components/dashboard/dashboardIcons';
-import { DetailLink, KpiCard, SectionCard } from '@/components/dashboard/dashboardUi';
+import { KpiCard, SectionCard } from '@/components/dashboard/dashboardUi';
 
 const QUALITY_MODULES = [
   {
     id: 'incoming',
     title: 'Giriş Kalite Kontrol',
     description: 'Ham madde ve tedarikçi giriş kontrolleri',
-    href: '/kalite',
-    tone: 'border-rose-500/20 hover:border-rose-500/40',
+    tone: 'border-rose-500/20',
     iconTone: 'text-rose-400 bg-rose-500/10',
   },
   {
     id: 'production',
     title: 'Üretim Kalite Kontrol',
     description: 'Proses içi ve hat sonu kontrol kayıtları',
-    href: '/kalite',
-    tone: 'border-violet-500/20 hover:border-violet-500/40',
-    iconTone: 'text-violet-400 bg-violet-500/10',
+    tone: 'border-teal-500/20',
+    iconTone: 'text-teal-400 bg-teal-500/10',
   },
   {
     id: 'ncr',
     title: 'Uygunsuzluklar',
     description: 'NCR, CAPA ve düzeltici faaliyet takibi',
-    href: '/kalite',
-    tone: 'border-amber-500/20 hover:border-amber-500/40',
+    tone: 'border-amber-500/20',
     iconTone: 'text-amber-400 bg-amber-500/10',
   },
   {
     id: 'calibration',
     title: 'Kalibrasyon',
     description: 'Ölçüm cihazları ve kalibrasyon planı',
-    href: '/kalite',
-    tone: 'border-sky-500/20 hover:border-sky-500/40',
+    tone: 'border-sky-500/20',
     iconTone: 'text-sky-400 bg-sky-500/10',
   },
 ];
@@ -75,27 +70,26 @@ export default function QualityTab({ snapshot, loading }) {
         />
       </div>
 
-      <SectionCard title="Kalite modülleri" action={<DetailLink href="/kalite" label="Kalite merkezi →" />}>
+      <SectionCard title="Kalite modülleri">
         <div className="grid gap-4 sm:grid-cols-2">
           {QUALITY_MODULES.map((module) => (
-            <Link
+            <div
               key={module.id}
-              href={module.href}
-              className={`group rounded-xl border bg-slate-950/40 p-4 transition-colors ${module.tone}`}
+              className={`rounded-xl border bg-slate-950/40 p-4 ${module.tone}`}
             >
               <div className="flex items-start gap-3">
                 <div className={`rounded-lg p-2.5 ${module.iconTone}`}>
                   <ModuleIcon className="h-5 w-5" />
                 </div>
                 <div className="min-w-0 flex-1">
-                  <p className="font-semibold text-white group-hover:text-rose-200">{module.title}</p>
+                  <p className="font-semibold text-white">{module.title}</p>
                   <p className="mt-1 text-xs leading-relaxed text-slate-500">{module.description}</p>
                   <p className="mt-3 text-[10px] font-semibold uppercase tracking-wider text-slate-600">
                     Yakında aktif
                   </p>
                 </div>
               </div>
-            </Link>
+            </div>
           ))}
         </div>
       </SectionCard>

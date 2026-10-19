@@ -33,8 +33,8 @@ export default function LoginPage() {
   };
 
   return (
-    <main className="min-h-screen bg-slate-950 text-slate-100 grid place-items-center px-6">
-      <section className="w-full max-w-md rounded-lg border border-slate-800 bg-slate-900/70 p-8 shadow-2xl">
+    <main className="min-h-screen bg-background text-foreground grid place-items-center px-6">
+      <section className="w-full max-w-md rounded-lg border border-slate-700 bg-slate-900 p-8 shadow-2xl shadow-black/50">
         <div className="mb-8">
           <BrandLogo size="lg" asLink={false} tagline="Kontrol Odası" />
           <h1 className="mt-6 text-2xl font-black text-white">Giriş Yap</h1>

@@ -21,7 +21,7 @@ function OeeStationCard({ item }) {
   return (
     <Link
       href={`/station?station=${station.station_id}`}
-      className={`group block rounded-2xl border bg-slate-900/60 p-5 shadow-xl backdrop-blur-sm transition-all hover:-translate-y-0.5 hover:bg-slate-900/80 ${getOeeBorderClass(metrics.oee)}`}
+      className={`group block rounded-2xl border bg-slate-900 p-5 shadow-xl transition-all hover:-translate-y-0.5 hover:bg-slate-900 ${getOeeBorderClass(metrics.oee)}`}
     >
       <div className="mb-4 flex items-start justify-between gap-3">
         <div>
@@ -76,12 +76,13 @@ function OeeStationCard({ item }) {
 export default function OeeMonitorPage() {
   const [workstations, setWorkstations] = useState([]);
   const [orders, setOrders] = useState([]);
+  const [iotRows, setIotRows] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [lastUpdated, setLastUpdated] = useState(null);
 
   const loadData = async () => {
-    const [stationsRes, ordersRes] = await Promise.all([
+    const [stationsRes, ordersRes, iotRes] = await Promise.all([
       supabase
         .from('workstations')
         .select('station_id,station_name,branch,department,active,capacity')
@@ -91,6 +92,10 @@ export default function OeeMonitorPage() {
         .from('production_orders')
         .select('p_order_id,p_order_no,product_name2,lot_no,quantity,counter_value,station_id,is_stage')
         .in('is_stage', [0, 1, 3, 4]),
+      supabase
+        .schema('production')
+        .from('sp_station')
+        .select('station_id,counter_value,machine_status,updated_at'),
     ]);
 
     if (stationsRes.error || ordersRes.error) {
@@ -101,6 +106,7 @@ export default function OeeMonitorPage() {
 
     setWorkstations(stationsRes.data || []);
     setOrders(ordersRes.data || []);
+    setIotRows(iotRes.error ? [] : iotRes.data || []);
     setError('');
     setLoading(false);
     setLastUpdated(new Date());
@@ -113,8 +119,8 @@ export default function OeeMonitorPage() {
   }, []);
 
   const summaries = useMemo(
-    () => summarizeStations(workstations.filter((s) => s.active !== 0), orders),
-    [workstations, orders],
+    () => summarizeStations(workstations.filter((s) => s.active !== 0), orders, iotRows),
+    [workstations, orders, iotRows],
   );
 
   const avgOee = summaries.length
@@ -143,7 +149,7 @@ export default function OeeMonitorPage() {
               Operatör paneli
             </Link>
             {lastUpdated && (
-              <span className="rounded-xl border border-slate-800 bg-slate-900/60 px-4 py-2 text-sm text-slate-500">
+              <span className="rounded-xl border border-slate-800 bg-slate-900 px-4 py-2 text-sm text-slate-500">
                 Guncelleme: {lastUpdated.toLocaleTimeString('tr-TR', { hour12: false })}
               </span>
             )}
@@ -152,15 +158,15 @@ export default function OeeMonitorPage() {
       />
 
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
-        <div className="rounded-2xl border border-slate-800 bg-slate-900/60 p-5">
+        <div className="rounded-2xl border border-slate-700 bg-slate-900 p-5">
           <p className="text-xs font-mono uppercase tracking-wider text-slate-500">Ortalama OEE</p>
           <p className={`mt-2 text-4xl font-black ${getOeeTextClass(avgOee)}`}>{avgOee}%</p>
         </div>
-        <div className="rounded-2xl border border-slate-800 bg-slate-900/60 p-5">
+        <div className="rounded-2xl border border-slate-700 bg-slate-900 p-5">
           <p className="text-xs font-mono uppercase tracking-wider text-slate-500">Uretimde</p>
           <p className="mt-2 text-4xl font-black text-emerald-400">{runningCount}</p>
         </div>
-        <div className="rounded-2xl border border-slate-800 bg-slate-900/60 p-5">
+        <div className="rounded-2xl border border-slate-700 bg-slate-900 p-5">
           <p className="text-xs font-mono uppercase tracking-wider text-slate-500">Ariza / Durus</p>
           <p className="mt-2 text-4xl font-black text-rose-400">{faultCount}</p>
         </div>

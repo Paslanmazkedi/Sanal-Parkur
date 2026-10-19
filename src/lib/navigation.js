@@ -6,13 +6,23 @@ export const SECTION_HREFS = {
   service: '/servis',
 };
 
+export const DASHBOARD_TAB_HREFS = {
+  production: '/',
+  quality: '/?tab=quality',
+  maintenance: '/?tab=maintenance',
+};
+
+export const DASHBOARD_TAB = {
+  production: 'production',
+  quality: 'quality',
+  maintenance: 'maintenance',
+};
+
 export const HOME_LABEL = 'Ana Sayfa';
 
 export const PRODUCTION_DEFAULT_HREF = '/station';
 
 export const PRODUCTION_ORDERS_HREF = '/iot-entegrasyon/uretim-emirleri';
-
-export const WEX_LAB_SECTION_LABEL = 'WEX Lab';
 
 export const REPORTS_SECTION_LABEL = 'Raporlar';
 
@@ -39,22 +49,12 @@ export const PARAMETER_LINKS = [
 export const REPORTS_LINKS = [
   { href: '/oee', label: 'OEE' },
   { href: '/duraklamalar', label: 'Duraklamalar' },
-];
-
-export const WEX_LAB_LINKS = [
-  { href: '/simulator', label: 'PLC Simülatör' },
-  { href: '/iot-gateway', label: 'IoT Gateway' },
   { href: '/logs', label: 'Entegrasyon Logları' },
 ];
 
-/** @deprecated Use WEX_LAB_LINKS */
-export const IOT_TOOLS_LINKS = WEX_LAB_LINKS;
-
-export const WEX_LAB_PATHS = WEX_LAB_LINKS.map((item) => item.href);
-
 export const REPORTS_PATHS = REPORTS_LINKS.map((item) => item.href);
 
-/** Eski URL'ler — menü açık kalsın, sayfalar redirect edilir */
+/** Eski URL'ler — next.config redirects; menü vurgusu için tutulur */
 export const LEGACY_PRODUCTION_PATHS = [
   '/uretim',
   '/production-orders',
@@ -62,6 +62,8 @@ export const LEGACY_PRODUCTION_PATHS = [
   '/iot-entegrasyon/operator-paneli',
   '/iot-entegrasyon/loglar',
   '/assets',
+  '/simulator',
+  '/iot-gateway',
 ];
 
 export const PARAMETER_PATHS = PARAMETER_LINKS.map((item) => item.href);
@@ -69,7 +71,6 @@ export const PARAMETER_PATHS = PARAMETER_LINKS.map((item) => item.href);
 export const PRODUCTION_PATHS = [
   ...PRODUCTION_LINKS.map((item) => item.href),
   ...PARAMETER_PATHS,
-  ...WEX_LAB_PATHS,
   ...LEGACY_PRODUCTION_PATHS,
 ];
 
@@ -97,15 +98,13 @@ export const PAGE_TITLES = {
   '/duraklamalar': 'Duraklamalar',
   '/assets': 'İstasyonlar',
   '/logs': 'Entegrasyon Logları',
-  '/simulator': 'PLC Simülatör',
-  '/iot-gateway': 'IoT Gateway',
   '/uretim': 'Üretim',
   '/production-orders': 'Üretim Emirleri',
   '/iot-entegrasyon': 'Üretim',
   '/iot-entegrasyon/operator-paneli': 'Operatör Paneli',
   '/iot-entegrasyon/loglar': 'Entegrasyon Logları',
-  '/kalite': 'Kalite Özeti',
-  '/servis': 'Servis Özeti',
+  '/kalite': 'Kalite',
+  '/servis': 'Servis',
   '/lot-records': 'Lot Kayıtları',
   '/login': 'Giriş',
   '/hesabim': 'Hesabım',
@@ -114,17 +113,36 @@ export const PAGE_TITLES = {
 export const MORE_MENU_SECTIONS = [
   { title: 'Üretim', links: PRODUCTION_LINKS },
   { title: PARAMETER_SECTION_LABEL, links: PARAMETER_LINKS },
-  { title: WEX_LAB_SECTION_LABEL, links: WEX_LAB_LINKS },
   { title: REPORTS_SECTION_LABEL, links: REPORTS_LINKS },
 ];
 
-export function isExactOrNestedPath(pathname, href) {
-  if (href === '/') return pathname === '/';
-  return pathname === href || pathname.startsWith(`${href}/`);
+export function parseDashboardTab(searchParams) {
+  const raw =
+    typeof searchParams?.get === 'function'
+      ? searchParams.get('tab')
+      : searchParams?.tab ?? null;
+
+  if (raw === DASHBOARD_TAB.quality) return DASHBOARD_TAB.quality;
+  if (raw === DASHBOARD_TAB.maintenance || raw === 'service' || raw === 'servis') {
+    return DASHBOARD_TAB.maintenance;
+  }
+  return DASHBOARD_TAB.production;
 }
 
-export function isSectionActive(pathname, sectionKey) {
-  if (sectionKey === 'general') return pathname === '/';
+export function getDashboardHref(tab) {
+  return DASHBOARD_TAB_HREFS[tab] || DASHBOARD_TAB_HREFS.production;
+}
+
+export function isExactOrNestedPath(pathname, href) {
+  const pathOnly = String(href || '').split('?')[0];
+  if (pathOnly === '/') return pathname === '/';
+  return pathname === pathOnly || pathname.startsWith(`${pathOnly}/`);
+}
+
+export function isSectionActive(pathname, sectionKey, _searchParams) {
+  if (sectionKey === 'general') {
+    return pathname === '/';
+  }
   if (sectionKey === 'production') {
     return PRODUCTION_PATHS.some((href) => isExactOrNestedPath(pathname, href));
   }
@@ -132,16 +150,29 @@ export function isSectionActive(pathname, sectionKey) {
     return REPORTS_PATHS.some((href) => isExactOrNestedPath(pathname, href));
   }
   if (sectionKey === 'quality') {
-    return pathname === SECTION_HREFS.quality || pathname.startsWith('/kalite/');
+    return pathname === SECTION_HREFS.quality || pathname.startsWith(`${SECTION_HREFS.quality}/`);
   }
   if (sectionKey === 'service') {
-    return pathname === SECTION_HREFS.service || pathname.startsWith('/servis/');
+    return pathname === SECTION_HREFS.service || pathname.startsWith(`${SECTION_HREFS.service}/`);
   }
   /** @deprecated production ile birleşti */
   if (sectionKey === 'iot') {
     return PRODUCTION_PATHS.some((href) => isExactOrNestedPath(pathname, href));
   }
   return false;
+}
+
+export function isNavHrefActive(pathname, href, searchParams) {
+  if (href === SECTION_HREFS.quality) {
+    return isSectionActive(pathname, 'quality', searchParams);
+  }
+  if (href === SECTION_HREFS.service) {
+    return isSectionActive(pathname, 'service', searchParams);
+  }
+  if (href === SECTION_HREFS.general || href === '/') {
+    return isSectionActive(pathname, 'general', searchParams);
+  }
+  return isExactOrNestedPath(pathname, href);
 }
 
 export function getPageTitle(pathname) {

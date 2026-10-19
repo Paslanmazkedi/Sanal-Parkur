@@ -61,7 +61,7 @@ export function StatusBarChart({ items = [], loading = false }) {
   const total = rows.reduce((sum, item) => sum + item.count, 0);
 
   return (
-    <div className="rounded-xl border border-slate-800 bg-slate-900/60 px-4 py-4">
+    <div className="rounded-xl border border-slate-700 bg-slate-900 px-4 py-4">
       <div className="mb-3 flex items-end justify-between gap-3">
         <div>
           <p className="text-[10px] font-semibold uppercase tracking-wider text-slate-500">Emir statüleri</p>

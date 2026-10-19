@@ -1,23 +1,43 @@
 @import "tailwindcss";
 
+/*
+  Endüstriyel antrasit gece teması — mavi/mor undertone yok.
+  Tuval #0C0E10, pencereler #2A3138.
+*/
 :root {
-  /* Açık tema (Light Mode) dayatmasını tamamen iptal edip varsayılanı Gece Modu yapıyoruz */
-  --background: #030712; /* En koyu Slate/Siyah tonu */
-  --foreground: #f8fafc; /* Net okunabilir bembeyaz yazı */
+  --background: #0c0e10;
+  --foreground: #eef1f3;
+  --surface: #2a3138;
+  --border: #4a525a;
+  --muted: #9aa1a8;
+  --chrome: #0c0e10;
 }
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
+  --color-surface: var(--surface);
+  --color-muted: var(--muted);
+  --color-chrome: var(--chrome);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
+
+  --color-slate-50: #f4f5f6;
+  --color-slate-100: #e8eaec;
+  --color-slate-200: #d4d8dc;
+  --color-slate-300: #b8bec4;
+  --color-slate-400: #9aa1a8;
+  --color-slate-500: #7a828a;
+  --color-slate-600: #5c646c;
+  --color-slate-700: #4a525a;
+  --color-slate-800: #3a424a;
+  --color-slate-900: #2a3138;
+  --color-slate-950: #0c0e10;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #030712;
-    --foreground: #f8fafc;
-  }
+html {
+  color-scheme: dark;
+  background: var(--background);
 }
 
 body {
@@ -26,12 +46,17 @@ body {
   font-family: Arial, Helvetica, sans-serif;
 }
 
-/* Form elemanlarının (Select) içindeki yazıların ve okların net görünmesi için v4 uyumlu ekleme */
+.app-card {
+  background: var(--surface);
+  color: var(--foreground);
+  border: 1px solid var(--border);
+}
+
 select {
-  background-color: #090d16 !important;
-  color: #ffffff !important;
-  border-color: #334155 !important;
-  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24' fill='none' stroke='%2310b981' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><polyline points='6 9 12 15 18 9'></polyline></svg>") !important;
+  background-color: #14181c !important;
+  color: #eef1f3 !important;
+  border-color: #4a525a !important;
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24' fill='none' stroke='%2334d399' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><polyline points='6 9 12 15 18 9'></polyline></svg>") !important;
   background-repeat: no-repeat !important;
   background-position: right 0.75rem center !important;
   background-size: 1rem !important;
@@ -40,12 +65,11 @@ select {
 }
 
 input {
-  background-color: #090d16 !important;
-  color: #ffffff !important;
-  border-color: #334155 !important;
+  background-color: #14181c !important;
+  color: #eef1f3 !important;
+  border-color: #4a525a !important;
 }
 
-/* Koyu temada tarih seçici takvim ikonu */
 input[type='date']::-webkit-calendar-picker-indicator {
   cursor: pointer;
   opacity: 1;

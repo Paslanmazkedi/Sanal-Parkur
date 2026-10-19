@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
+import { usePathname, useSearchParams } from 'next/navigation';
 import { useState } from 'react';
 import {
   MOBILE_TABS,
@@ -10,8 +10,6 @@ import {
   PRODUCTION_LINKS,
   REPORTS_LINKS,
   REPORTS_SECTION_LABEL,
-  WEX_LAB_LINKS,
-  WEX_LAB_SECTION_LABEL,
   isExactOrNestedPath,
   isSectionActive,
 } from '../lib/navigation';
@@ -92,6 +90,7 @@ function SheetLinks({ title, links, pathname, onClose, activeClass = 'bg-emerald
 
 export default function MobileNav() {
   const pathname = usePathname();
+  const searchParams = useSearchParams();
   const [productionOpen, setProductionOpen] = useState(false);
   const [reportsOpen, setReportsOpen] = useState(false);
 
@@ -113,7 +112,7 @@ export default function MobileNav() {
             onClick={closeSheets}
           />
           <div
-            className="absolute inset-x-0 bottom-16 max-h-[70vh] overflow-y-auto rounded-t-2xl border border-slate-800 bg-slate-900 px-4 py-4 shadow-2xl"
+            className="absolute inset-x-0 bottom-16 max-h-[70vh] overflow-y-auto rounded-t-2xl border border-slate-700 bg-slate-900 px-4 py-4 shadow-2xl"
             style={{ paddingBottom: '0.5rem' }}
           >
             {productionOpen ? (
@@ -132,26 +131,6 @@ export default function MobileNav() {
                         onClick={closeSheets}
                         className={`block rounded-xl px-3 py-3 text-sm font-medium ${
                           active ? 'bg-emerald-700 text-white' : 'text-slate-300 hover:bg-slate-800'
-                        }`}
-                      >
-                        {link.label}
-                      </Link>
-                    );
-                  })}
-                </div>
-                <p className="mb-2 mt-4 text-[11px] font-semibold uppercase tracking-wider text-violet-400/80">
-                  {WEX_LAB_SECTION_LABEL}
-                </p>
-                <div className="space-y-1">
-                  {WEX_LAB_LINKS.map((link) => {
-                    const active = isExactOrNestedPath(pathname, link.href);
-                    return (
-                      <Link
-                        key={link.href}
-                        href={link.href}
-                        onClick={closeSheets}
-                        className={`block rounded-xl px-3 py-3 text-sm font-medium ${
-                          active ? 'bg-violet-700 text-white' : 'text-slate-300 hover:bg-slate-800'
                         }`}
                       >
                         {link.label}
@@ -178,7 +157,7 @@ export default function MobileNav() {
       >
         <div className="grid h-16 grid-cols-5">
           {MOBILE_TABS.map((tab) => {
-            const active = isSectionActive(pathname, tab.key);
+            const active = isSectionActive(pathname, tab.key, searchParams);
 
             if (tab.key === 'production' || tab.key === 'reports') {
               const open = tab.key === 'production' ? productionOpen : reportsOpen;
