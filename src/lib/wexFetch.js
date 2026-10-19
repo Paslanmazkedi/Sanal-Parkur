@@ -40,33 +40,44 @@ export function formatWexFetchError(error) {
   return 'Workcube WEX istegi basarisiz.';
 }
 
-export function wexFetch(urlString) {
+export function wexFetch(urlString, options = {}) {
   const url = new URL(urlString);
   const agent = getHttpsAgent();
+  const method = String(options.method || 'GET').toUpperCase();
+  const body =
+    options.body == null
+      ? null
+      : typeof options.body === 'string'
+        ? options.body
+        : JSON.stringify(options.body);
+
+  const headers = {
+    Accept: 'application/json',
+    ...(body
+      ? {
+          'Content-Type': 'application/json',
+          'Content-Length': Buffer.byteLength(body),
+        }
+      : {}),
+    ...(options.headers || {}),
+  };
 
   return new Promise((resolve, reject) => {
-    const request = https.get(
-      url,
-      {
-        agent,
-        headers: { Accept: 'application/json' },
-      },
-      (response) => {
-        let rawText = '';
+    const request = https.request(url, { method, agent, headers }, (response) => {
+      let rawText = '';
 
-        response.on('data', (chunk) => {
-          rawText += chunk;
-        });
+      response.on('data', (chunk) => {
+        rawText += chunk;
+      });
 
-        response.on('end', () => {
-          resolve({
-            ok: response.statusCode >= 200 && response.statusCode < 300,
-            status: response.statusCode,
-            text: async () => rawText,
-          });
+      response.on('end', () => {
+        resolve({
+          ok: response.statusCode >= 200 && response.statusCode < 300,
+          status: response.statusCode,
+          text: async () => rawText,
         });
-      },
-    );
+      });
+    });
 
     request.on('error', (error) => {
       reject(new Error(formatWexFetchError(error)));
@@ -75,5 +86,8 @@ export function wexFetch(urlString) {
     request.setTimeout(20000, () => {
       request.destroy(new Error('Workcube WEX istegi zaman asimina ugradi (20sn).'));
     });
+
+    if (body) request.write(body);
+    request.end();
   });
 }

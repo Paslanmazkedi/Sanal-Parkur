@@ -7,6 +7,7 @@ import {
   logOperatorAction,
   normalizeBasketLines,
 } from '@/lib/operatorServer';
+import { pushProductionOrderStage } from '@/lib/wexStagePush';
 
 export async function POST(request) {
   const auth = await getAuthenticatedUser(request);
@@ -129,6 +130,16 @@ export async function POST(request) {
     }).then(({ error }) => {
       if (error) console.error('station_events insert error:', error);
     });
+
+    if (updatedOrder) {
+      await pushProductionOrderStage({
+        order: updatedOrder,
+        isStage: 2,
+        action: 'finish',
+      }).catch((pushError) => {
+        console.error('WEX stage push error:', pushError);
+      });
+    }
 
     return NextResponse.json({
       success: true,

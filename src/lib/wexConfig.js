@@ -4,6 +4,15 @@ export function getWexSpInfoBaseUrl() {
   return (process.env.WEX_SPINFO_BASE_URL || DEFAULT_BASE_URL).replace(/\/$/, '');
 }
 
+export function isWexStagePushEnabled() {
+  return process.env.WEX_PUSH_STAGE_ENABLED !== 'false';
+}
+
+export function getWexPushStagePath() {
+  const raw = process.env.WEX_PUSH_STAGE_PATH || 'UpdateProductionOrderStage';
+  return String(raw).replace(/^\//, '');
+}
+
 export function getDefaultCompanyId() {
   const parsed = Number(process.env.WEX_DEFAULT_COMPANY_ID || 1);
   return Number.isFinite(parsed) && parsed > 0 ? parsed : 1;

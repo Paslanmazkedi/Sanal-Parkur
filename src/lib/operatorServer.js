@@ -1,5 +1,6 @@
 import { serverSupabase as supabase } from '@/lib/serverSupabase';
 import { OPERATOR_ACTIONS } from '@/lib/operatorConstants';
+import { pushProductionOrderStage } from '@/lib/wexStagePush';
 
 export async function fetchOrderForStation(pOrderId, stationId) {
   const { data, error } = await supabase
@@ -131,6 +132,14 @@ export async function applyStageAction({
     metadata: { from_stage: currentStage, to_stage: config.toStage },
   }).then(({ error: eventError }) => {
     if (eventError) console.error('station_events insert error:', eventError);
+  });
+
+  await pushProductionOrderStage({
+    order: data,
+    isStage: config.toStage,
+    action,
+  }).catch((pushError) => {
+    console.error('WEX stage push error:', pushError);
   });
 
   return data;

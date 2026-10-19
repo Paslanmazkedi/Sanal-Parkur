@@ -17,7 +17,7 @@ import { useOperatorKiosk } from '@/hooks/useOperatorKiosk';
 import { supabase } from '../supabase';
 
 const IOT_SELECT =
-  'station_id,overall_count,machine_status,plc_p_order_id,queue_p_order_id,queue_quantity,read_at,payload,updated_at';
+  'station_id,overall_count,counter_value,slot_count,active_slot_count,cycle_time,machine_speed,machine_status,plc_p_order_id,queue_p_order_id,queue_quantity,read_at,payload,updated_at';
 
 const POLL_MS = 8000;
 const ORDER_SELECT =
@@ -379,7 +379,7 @@ function StationOperatorContent() {
         <div className="mb-2 shrink-0 rounded-xl border border-cyan-500/25 bg-slate-950/60 px-3 py-2 text-xs text-slate-300">
           {iotLive ? (
             <p>
-              IoT kutu · {getMachineStatusLabel(iotLive.machine_status)} · overall{' '}
+              Üretim parametreleri · {getMachineStatusLabel(iotLive.machine_status)} · overall{' '}
               <span className="font-mono font-semibold text-white">
                 {iotLive.overall_count == null ? '—' : Number(iotLive.overall_count).toLocaleString('tr-TR')}
               </span>

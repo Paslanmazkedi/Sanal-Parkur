@@ -105,7 +105,14 @@ export async function POST(request) {
     event: 'iot_station_upsert',
     outcome: 'SUCCESS',
     payload: body,
-    details: { station_id: stationId, overall_count: row.overall_count, machine_status: row.machine_status },
+    details: {
+      station_id: stationId,
+      overall_count: row.overall_count,
+      counter_value: row.counter_value,
+      slot_count: row.slot_count,
+      active_slot_count: row.active_slot_count,
+      machine_status: row.machine_status,
+    },
   });
 
   return NextResponse.json({

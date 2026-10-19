@@ -3,14 +3,9 @@
 import { useState } from 'react';
 import { OPERATOR_ACTIONS, getActionDisabledReason } from '@/lib/operatorConstants';
 import { getStageMeta } from '@/lib/stationStages';
-import {
-  getIotCycleTime,
-  getIotEyeCount,
-  getIotJobCount,
-  getIotMachineSpeed,
-  getMachineStatusLabel,
-  livePayloadRows,
-} from '@/lib/iotStation';
+import { formatParamValue, getParamByKey, getScoreCardParams } from '@/lib/iotParamCatalog';
+import { getIotJobCount, getIotParamValue, getMachineStatusLabel, livePayloadRows } from '@/lib/iotStation';
+import ParamGauge from '@/components/operator/ParamGauge';
 
 const actionStyles = {
   control: 'border-sky-500/40 bg-sky-500/10 text-sky-200',
@@ -134,9 +129,7 @@ export default function StationRunConsole({
   ];
   const machineStatus = iotLive?.machine_status;
   const statusLabel = getMachineStatusLabel(machineStatus);
-  const eyeCount = getIotEyeCount(iotLive);
-  const cycleTime = getIotCycleTime(iotLive);
-  const machineSpeed = getIotMachineSpeed(iotLive);
+  const scoreCards = getScoreCardParams();
 
   const actionClass =
     'min-h-11 flex-1 rounded-xl border px-1.5 text-[12px] font-semibold leading-tight transition-colors sm:text-sm disabled:cursor-not-allowed disabled:opacity-35';
@@ -180,7 +173,7 @@ export default function StationRunConsole({
 
       <div className="shrink-0 rounded-2xl border border-cyan-500/25 bg-slate-950/70 px-3 py-3">
         <div className="flex flex-wrap items-center justify-between gap-2">
-          <p className="text-[10px] font-semibold uppercase tracking-wider text-cyan-400/90">IoT kutu</p>
+          <p className="text-[10px] font-semibold uppercase tracking-wider text-cyan-400/90">Üretim parametreleri</p>
           <span
             className={`rounded-md border px-2 py-0.5 text-[11px] font-semibold ${
               Number(machineStatus) === 2
@@ -195,19 +188,30 @@ export default function StationRunConsole({
         </div>
         <div className="mt-2.5 flex items-stretch gap-2">
           <div className="grid min-w-0 flex-1 grid-cols-3 gap-2">
-            <ScoreCard label="Göz sayısı" value={formatMetric(eyeCount)} hint="Yakında" />
-            <ScoreCard
-              label="Çevrim süresi"
-              value={cycleTime == null ? '—' : `${formatMetric(cycleTime)} sn`}
-            />
-            <ScoreCard label="MACHINE_SPEED" value={formatMetric(machineSpeed)} />
+            {scoreCards.map((param) => {
+              const raw = getIotParamValue(iotLive, param);
+              const display = formatParamValue(raw, param);
+              if (param.widget === 'gauge') {
+                return (
+                  <ParamGauge
+                    key={param.key}
+                    label={param.label}
+                    value={raw}
+                    display={display}
+                    min={param.min ?? 0}
+                    max={param.max ?? 100}
+                  />
+                );
+              }
+              return <ScoreCard key={param.key} label={param.label} value={display} />;
+            })}
           </div>
           <button
             type="button"
             onClick={() => setShowProcess((open) => !open)}
-            className="w-[5.75rem] shrink-0 rounded-xl border border-slate-700 px-1.5 text-center text-[11px] font-semibold leading-tight text-slate-300 hover:border-cyan-500/40 sm:w-28 sm:text-xs"
+            className="w-[5.75rem] shrink-0 rounded-xl border border-violet-500/40 bg-violet-500/10 px-1.5 text-center text-[11px] font-semibold leading-tight text-violet-200 hover:border-violet-400/70 hover:bg-violet-500/20 sm:w-28 sm:text-xs"
           >
-            {showProcess ? 'Parametre detayı gizle' : 'Parametre detay'}
+            {showProcess ? 'Gizle' : 'Detay'}
           </button>
         </div>
         {showProcess ? (
@@ -217,7 +221,9 @@ export default function StationRunConsole({
             ) : (
               processRows.map((row) => (
                 <div key={row.key} className="rounded-md border border-slate-800 px-2 py-1">
-                  <p className="truncate text-[9px] text-slate-500">{row.key === 'SON_PAKET' ? 'Son paket' : row.key}</p>
+                  <p className="truncate text-[9px] text-slate-500">
+                    {row.key === 'SON_PAKET' ? 'Son paket' : getParamByKey(row.key)?.label || row.key}
+                  </p>
                   <p className="font-mono text-xs text-slate-200">{row.value}</p>
                 </div>
               ))

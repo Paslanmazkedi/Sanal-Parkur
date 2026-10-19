@@ -4,6 +4,9 @@
   "signals": {
     "OVERALL_COUNT": 34953,
     "COUNTER_VALUE": 5,
+    "SLOT_COUNT": 10,
+    "ACTIVE_SLOT_COUNT": 9,
+    "CYCLE_TIME": 12,
     "P_ORDER_ID": null,
     "RESULT_AMOUNT": null,
     "QUEUE_P_ORDER_ID": null,

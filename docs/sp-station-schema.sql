@@ -8,6 +8,11 @@ create table if not exists production.sp_station (
   station_id bigint primary key,
   device_id uuid,
   overall_count numeric(14,4),
+  counter_value numeric(14,4),
+  slot_count integer,
+  active_slot_count integer,
+  cycle_time numeric(10,3),
+  machine_speed numeric(10,3),
   machine_status smallint
     check (machine_status is null or machine_status in (0, 1, 2)),
   plc_p_order_id bigint,
