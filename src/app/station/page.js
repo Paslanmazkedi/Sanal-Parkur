@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { Suspense, useCallback, useEffect, useMemo, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import BrandLogo from '@/components/BrandLogo';
+import LiveClock from '@/components/LiveClock';
 import StationOrderBoard from '@/components/operator/StationOrderBoard';
 import StationRunConsole from '@/components/operator/StationRunConsole';
 import TimeEntryModal from '@/components/operator/TimeEntryModal';
@@ -21,10 +22,6 @@ const IOT_SELECT =
 const POLL_MS = 8000;
 const ORDER_SELECT =
   'p_order_id,p_order_no,product_name2,lot_no,quantity,counter_value,station_id,is_stage,start_date';
-
-function formatClock(date) {
-  return date.toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
-}
 
 async function fetchOpenOrders(extra = {}) {
   let query = supabase
@@ -69,7 +66,6 @@ function StationOperatorContent() {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
   const [successMsg, setSuccessMsg] = useState('');
-  const [now, setNow] = useState(() => new Date());
   const [timeModalOpen, setTimeModalOpen] = useState(false);
   const [finishModalOpen, setFinishModalOpen] = useState(false);
   const [pauseModalOpen, setPauseModalOpen] = useState(false);
@@ -191,16 +187,6 @@ function StationOperatorContent() {
     return () => clearInterval(poll);
   }, [showConsole, loadStationOrders]);
 
-  useEffect(() => {
-    const timer = setInterval(() => setNow(new Date()), 1000);
-    return () => clearInterval(timer);
-  }, []);
-
-  const activeWorkstations = useMemo(
-    () => workstations.filter((ws) => ws.active !== 0),
-    [workstations],
-  );
-
   const filteredListOrders = useMemo(() => {
     if (!stationId) return listOrders;
     return listOrders.filter((order) => String(order.station_id) === String(stationId));
@@ -238,15 +224,6 @@ function StationOperatorContent() {
     router.replace(query ? `/station?${query}` : '/station');
   };
 
-  const handleFilterStation = (nextStationId) => {
-    setStationId(nextStationId);
-    setRunOrderId(null);
-    setSelectedOrderId(null);
-    setSuccessMsg('');
-    setError('');
-    replaceStationUrl(nextStationId, null);
-  };
-
   const handleEnterOrder = (order) => {
     const nextStationId = String(order.station_id);
     setStationId(nextStationId);
@@ -261,10 +238,11 @@ function StationOperatorContent() {
   const handleBackToList = () => {
     setRunOrderId(null);
     setSelectedOrderId(null);
+    setStationId('');
     setOrders([]);
     setSuccessMsg('');
     setError('');
-    replaceStationUrl(stationId, null);
+    replaceStationUrl(null, null);
   };
 
   const handleAction = async (action) => {
@@ -353,33 +331,37 @@ function StationOperatorContent() {
       {kiosk && (
         <header className="mb-3 flex shrink-0 items-center justify-between gap-3 border-b border-slate-800 pb-3">
           <BrandLogo size="sm" showTagline={false} asLink={false} />
-          <Link
-            href="/station?kiosk=0"
-            className="rounded-lg border border-slate-700 px-3 py-2 text-[11px] font-semibold text-slate-400 transition-colors hover:border-slate-500 hover:text-slate-200"
-          >
-            Tam panel
-          </Link>
+          <div className="flex items-center gap-3">
+            <LiveClock className="text-slate-300" />
+            <Link
+              href="/station?kiosk=0"
+              className="rounded-lg border border-slate-700 px-3 py-2 text-[11px] font-semibold text-slate-400 transition-colors hover:border-slate-500 hover:text-slate-200"
+            >
+              Tam panel
+            </Link>
+          </div>
         </header>
       )}
 
-      <div className="mb-2 flex shrink-0 items-end gap-3">
-        <label className="min-w-0 flex-1">
-          <span className="mb-1 block text-[10px] font-semibold uppercase tracking-wider text-slate-500">
-            İstasyon
-          </span>
-          <select
-            value={stationId}
-            onChange={(event) => handleFilterStation(event.target.value)}
-            className="h-11 w-full rounded-xl border border-slate-800 bg-slate-950 px-3 text-sm text-white outline-none transition focus:border-emerald-500"
+      <div className="mb-3 flex shrink-0 items-center gap-3">
+        {showConsole ? (
+          <button
+            type="button"
+            onClick={handleBackToList}
+            className="shrink-0 rounded-lg border border-slate-700 px-3 py-2 text-sm font-semibold text-slate-200 hover:border-emerald-500/40 hover:text-white"
           >
-            <option value="">Tüm istasyonlar</option>
-            {activeWorkstations.map((ws) => (
-              <option key={ws.station_id} value={String(ws.station_id)}>
-                #{ws.station_id} · {ws.station_name}
-              </option>
-            ))}
-          </select>
-        </label>
+            ← Geri
+          </button>
+        ) : null}
+        <h1 className="min-w-0 flex-1 truncate text-2xl font-semibold tracking-tight text-white sm:text-3xl">
+          İstasyon
+          {stationId ? (
+            <>
+              : {workstation?.station_name || '—'}{' '}
+              <span className="font-mono text-slate-400">#{workstation?.station_id ?? stationId}</span>
+            </>
+          ) : null}
+        </h1>
       </div>
 
       {error && (
@@ -397,7 +379,7 @@ function StationOperatorContent() {
         <div className="mb-2 shrink-0 rounded-xl border border-cyan-500/25 bg-slate-950/60 px-3 py-2 text-xs text-slate-300">
           {iotLive ? (
             <p>
-              IoT kutu · {getMachineStatusLabel(iotLive.machine_status)} · sayaç{' '}
+              IoT kutu · {getMachineStatusLabel(iotLive.machine_status)} · overall{' '}
               <span className="font-mono font-semibold text-white">
                 {iotLive.overall_count == null ? '—' : Number(iotLive.overall_count).toLocaleString('tr-TR')}
               </span>
@@ -417,12 +399,9 @@ function StationOperatorContent() {
         {showConsole ? (
           <StationRunConsole
             stationId={stationId}
-            workstation={workstation}
             selectedOrder={selectedOrder}
             loading={loading}
             busy={busy}
-            clock={formatClock(now)}
-            onBack={handleBackToList}
             onAction={handleAction}
             onOpenTimeEntry={() => setTimeModalOpen(true)}
             blockingOrder={

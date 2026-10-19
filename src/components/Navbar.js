@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
 import BrandLogo from './BrandLogo';
+import LiveClock from './LiveClock';
 import { usePathname } from 'next/navigation';
 import { useSidebar } from '@/hooks/useSidebar';
 import { supabase } from '../supabase';
@@ -141,6 +142,8 @@ export default function Navbar() {
         <div className="min-w-0 flex-1" onClick={close}>
           <BrandLogo size="sm" showTagline={false} href="/" />
         </div>
+
+        <LiveClock className="text-[13px] text-slate-300 sm:text-sm" />
 
         <div className="flex min-w-0 max-w-[55%] shrink-0 items-center gap-2 lg:hidden">
           <p className="min-w-0 truncate text-right text-xs font-medium text-slate-200" title={displayName}>

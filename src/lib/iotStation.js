@@ -5,6 +5,7 @@ const MACHINE_STATUS_LABELS = {
 };
 
 const LIVE_PAYLOAD_KEYS = [
+  'OVERALL_COUNT',
   'POWER_1',
   'POWER_2',
   'POWER_3',
@@ -14,8 +15,12 @@ const LIVE_PAYLOAD_KEYS = [
   'SPOT_TIME',
   'COOL_TIME',
   'TRAFO_TIME',
-  'MACHINE_SPEED',
 ];
+
+const COUNTER_SIGNAL_KEYS = ['COUNTER_VALUE', 'counter_value'];
+const EYE_SIGNAL_KEYS = ['EYE_COUNT', 'eye_count', 'GOZ_SAYISI', 'goz_sayisi'];
+const SPEED_SIGNAL_KEYS = ['MACHINE_SPEED', 'machine_speed'];
+const CYCLE_SIGNAL_KEYS = ['CYCLE_TIME', 'cycle_time', 'CYCLE_SEC', 'cycle_sec', 'CEVRIM_SURESI'];
 
 function firstPresent(source, keys) {
   return keys.find((key) => source && Object.prototype.hasOwnProperty.call(source, key));
@@ -73,8 +78,42 @@ export function buildSpStationRow({ stationId, deviceId, body }) {
 
 export function livePayloadRows(payload) {
   const signals = payload?.signals && typeof payload.signals === 'object' ? payload.signals : payload || {};
-  return LIVE_PAYLOAD_KEYS.filter((key) => signals[key] !== undefined && signals[key] !== null).map((key) => ({
+  const overallAlias = firstPresent(signals, ['OVERALL_COUNT', 'overall_count', 'COUNT', 'count']);
+  return LIVE_PAYLOAD_KEYS.filter((key) => {
+    if (key === 'OVERALL_COUNT') {
+      return overallAlias ? signals[overallAlias] !== undefined && signals[overallAlias] !== null : false;
+    }
+    return signals[key] !== undefined && signals[key] !== null;
+  }).map((key) => ({
     key,
-    value: signals[key],
+    value: key === 'OVERALL_COUNT' ? signals[overallAlias] : signals[key],
   }));
+}
+
+function signalNumber(payload, keys) {
+  const signals = payload?.signals && typeof payload.signals === 'object' ? payload.signals : payload || {};
+  const key = firstPresent(signals, keys);
+  return key ? numberOrNull(signals[key]) : null;
+}
+
+export function getIotJobCount(iotLive) {
+  if (!iotLive) return null;
+  const fromPayload = signalNumber(iotLive.payload, COUNTER_SIGNAL_KEYS);
+  if (fromPayload !== null) return fromPayload;
+  return numberOrNull(iotLive.counter_value);
+}
+
+export function getIotEyeCount(iotLive) {
+  if (!iotLive) return null;
+  return signalNumber(iotLive.payload, EYE_SIGNAL_KEYS);
+}
+
+export function getIotMachineSpeed(iotLive) {
+  if (!iotLive) return null;
+  return signalNumber(iotLive.payload, SPEED_SIGNAL_KEYS);
+}
+
+export function getIotCycleTime(iotLive) {
+  if (!iotLive) return null;
+  return signalNumber(iotLive.payload, CYCLE_SIGNAL_KEYS);
 }

@@ -3,6 +3,7 @@
   "read_at": "2026-10-14T13:00:00Z",
   "signals": {
     "OVERALL_COUNT": 34953,
+    "COUNTER_VALUE": 5,
     "P_ORDER_ID": null,
     "RESULT_AMOUNT": null,
     "QUEUE_P_ORDER_ID": null,
